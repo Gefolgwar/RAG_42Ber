@@ -1,0 +1,96 @@
+# ==============================================================================
+# 42 School: RAG against the machine - .gitignore
+# ==============================================================================
+
+# Raw corpus & attachments
+vllm-0.10.1/
+vllm-0.10.1
+*.tar.gz
+*.zip
+
+# Project Generated Data & Outputs
+data/processed/*
+!data/processed/.gitkeep
+data/output/*
+!data/output/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+
+# Model Weights & Cache
+models/
+hf_cache/
+.cache/
+*.bin# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+*.pt
+*.pth
+*.safetensors
+*.onnx
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+
+# Linters, Type Checkers & Testing Caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# OS & IDE Files
+.DS_Store
+Thumbs.db
+.idea/# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+.vscode/# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+*.swp
+*~
+EOF

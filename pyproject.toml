@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "RAG_42Ber"
+version = "0.1.0"
+description = "RAG implementation with BM25, Qwen, and FastAPI"
+readme = "README.md"
+requires-python = ">=3.10"
+
+# Основні залежності проєкту (Mandatory + Bonus)
+dependencies = [
+    "pydantic>=2.6.0",
+    "fire>=0.6.0",
+    "tqdm>=4.66.0",
+    "bm25s>=0.2.0",
+    "pystemmer>=2.2.0",
+    "torch>=2.2.0",
+    "transformers>=4.44.0",
+    "accelerate>=0.30.0",
+    "sentence-transformers>=2.7.0",
+    "numpy>=1.26.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+]
+
+# Залежності для розробки, перевірки типізації та тестування (Chapter V.1)
+[dependency-groups]
+dev = [
+    "flake8>=7.0.0",
+    "mypy>=1.10.0",
+    "pytest>=8.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
