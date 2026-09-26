@@ -4,11 +4,10 @@
 
 # Raw corpus & attachments
 vllm-0.10.1/
-vllm-0.10.1
 *.tar.gz
 *.zip
 
-# Project Generated Data & Outputs
+# Project Generated Data & Outputs (keep directories via .gitkeep)
 data/processed/*
 !data/processed/.gitkeep
 data/output/*
@@ -16,81 +15,45 @@ data/output/*
 data/raw/*
 !data/raw/.gitkeep
 
-# Model Weights & Cache
+# Model Weights & Caches
 models/
 hf_cache/
 .cache/
-*.bin# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-
+*.bin
 *.pt
 *.pth
 *.safetensors
 *.onnx
 
-# Virtual Environments
-.venv/
-venv/
-env/
-
-# Python Bytecode
+# Python Bytecode & Build Artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 build/
 dist/
+wheels/
 *.egg-info/
+
+# Virtual Environments
+.venv/
+venv/
+env/
 
 # Linters, Type Checkers & Testing Caches
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
 .coverage
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
 
-# Virtual environments
-.venv
+# AI
+.claude/
+CLAUDE.md
 
 # OS & IDE Files
 .DS_Store
 Thumbs.db
-.idea/# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-
-.vscode/# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
-
-# Virtual environments
-.venv
-
+.idea/
+.vscode/
 *.swp
 *~
-EOF
