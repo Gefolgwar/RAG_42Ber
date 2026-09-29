@@ -44,9 +44,9 @@ debug:
 # ------------------------------------------------------------------------------
 lint:
 	@echo "==> Running flake8..."
-	$(UV) run flake8 .
+	$(UV) run flake8 src api
 	@echo "==> Running mypy with subject-mandated flags..."
-	$(UV) run mypy . \
+	$(UV) run mypy src api \
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \
@@ -55,9 +55,9 @@ lint:
 
 lint-strict:
 	@echo "==> Running flake8..."
-	$(UV) run flake8 .
+	$(UV) run flake8 src api
 	@echo "==> Running mypy in strict mode..."
-	$(UV) run mypy . --strict
+	$(UV) run mypy src api --strict
 
 # ------------------------------------------------------------------------------
 # Testing

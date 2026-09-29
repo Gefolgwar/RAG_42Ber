@@ -136,12 +136,14 @@ if __name__ == "__main__":
         first_character_index=4695,
         last_character_index=6098,
     )
-    print(f"[OK] MinimalSource created: {src1.file_path} [{src1.first_character_index}:{src1.last_character_index}]")
+    print(f"[OK] MinimalSource created: {src1.file_path} "
+          f"[{src1.first_character_index}:{src1.last_character_index}]")
 
     # 2. Test deduplication via set
     unique_sources = {src1, src2}
     assert len(unique_sources) == 1, "Deduplication failed!"
-    print(f"[OK] Immutability & Set deduplication verified (set len = {len(unique_sources)}, expected 1)")
+    print(f"[OK] Immutability & Set deduplication verified "
+          f"(set len = {len(unique_sources)}, expected 1)")
 
     # 3. Test question creation
     q = UnansweredQuestion(question="How to configure vLLM?")
