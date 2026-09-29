@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from src.chunking import Chunk
+from src.file_filter import matches
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 RRF_K = 60
@@ -100,9 +101,7 @@ class DenseIndex:
         ranked = sorted(range(len(self.chunks)), key=lambda i: sims[i], reverse=True)
         out: List[Tuple[Chunk, float]] = []
         for i in ranked:
-            from src.index import _matches
-
-            if _matches(self.chunks[i].file_path, file_type):
+            if matches(self.chunks[i].file_path, file_type):
                 out.append((self.chunks[i], float(sims[i])))
             if len(out) >= k:
                 break

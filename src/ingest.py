@@ -11,8 +11,7 @@ import os
 from collections.abc import Iterator
 from typing import List, Tuple
 
-DOC_EXTENSIONS = frozenset({".md", ".markdown", ".rst", ".txt"})
-CODE_EXTENSIONS = frozenset({".py"})
+from src.file_filter import matches
 
 IGNORED_DIRS = frozenset(
     {
@@ -27,24 +26,6 @@ IGNORED_DIRS = frozenset(
         "node_modules",
     }
 )
-
-
-def _matches_file_type(filename: str, file_type: str) -> bool:
-    """Check whether a filename belongs to the requested file category.
-
-    Args:
-        filename: Base filename (with extension) to test.
-        file_type: One of ``"all"``, ``"docs"`` or ``"code"``.
-
-    Returns:
-        True if the file extension belongs to the requested category.
-    """
-    ext: str = os.path.splitext(filename)[1].lower()
-    if file_type == "docs":
-        return ext in DOC_EXTENSIONS
-    if file_type == "code":
-        return ext in CODE_EXTENSIONS
-    return ext in DOC_EXTENSIONS or ext in CODE_EXTENSIONS
 
 
 def iter_files(root: str, file_type: str = "all") -> Iterator[str]:
@@ -66,7 +47,7 @@ def iter_files(root: str, file_type: str = "all") -> Iterator[str]:
         try:
             dirnames[:] = [d for d in dirnames if d not in IGNORED_DIRS]
             for name in sorted(filenames):
-                if _matches_file_type(name, file_type):
+                if matches(name, file_type):
                     yield os.path.join(dirpath, name)
         except OSError:
             continue

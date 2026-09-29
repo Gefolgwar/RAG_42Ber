@@ -12,24 +12,8 @@ from typing import Any, List, Optional, Tuple
 import bm25s
 
 from src.chunking import Chunk
+from src.file_filter import matches
 from src.tokenizer import build_tokenizer
-
-
-def _matches(path: str, file_type: str) -> bool:
-    """Check whether a path belongs to the requested file category.
-
-    Args:
-        path: Relative file path to test.
-        file_type: One of "all", "docs" or "code".
-
-    Returns:
-        True if the path matches the category.
-    """
-    if file_type == "docs":
-        return path.endswith((".md", ".markdown", ".rst", ".txt"))
-    if file_type == "code":
-        return path.endswith(".py")
-    return True
 
 
 class KnowledgeBase:
@@ -117,7 +101,7 @@ class KnowledgeBase:
         out: List[Tuple[Chunk, float]] = []
         for idx, score in zip(ids[0].tolist(), scores[0].tolist()):
             chunk = self.chunks[int(idx)]
-            if _matches(chunk.file_path, file_type):
+            if matches(chunk.file_path, file_type):
                 out.append((chunk, float(score)))
             if len(out) >= k:
                 break
