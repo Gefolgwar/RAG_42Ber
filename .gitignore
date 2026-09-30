@@ -4,8 +4,6 @@
 
 # Raw corpus & attachments
 vllm-0.10.1/
-*.tar.gz
-*.zip
 
 # Project Generated Data & Outputs (keep directories via .gitkeep)
 data/processed/*
