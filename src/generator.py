@@ -34,19 +34,14 @@ def format_context(chunks: List[Chunk]) -> str:
     return "\n\n".join(lines)
 
 
-def build_prompt(question: str, context: str) -> str:
-    """Assemble system prompt, context and question.
-
-    Args:
-        question: User question string.
-        context: Preformatted context from format_context().
-
-    Returns:
-        Full model prompt string.
-    """
-    return (
-        f"{SYSTEM_PROMPT}\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
-    )
+def build_prompt(question: str, context: str, tokenizer=None) -> str:
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
+    ]
+    if tokenizer and hasattr(tokenizer, "apply_chat_template"):
+        return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    return f"{SYSTEM_PROMPT}\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
 
 
 class AnswerGenerator:
@@ -77,7 +72,9 @@ class AnswerGenerator:
         self._model.eval()
 
     def generate(
-        self, question: str, chunks: List[Chunk], max_new_tokens: int = 256
+        self, question: str,
+        chunks: List[Chunk],
+        max_new_tokens: int = 256
     ) -> str:
         """Generate grounded answer from retrieved chunks.
 
@@ -91,18 +88,50 @@ class AnswerGenerator:
         """
         self._ensure_loaded()
         assert self._model is not None and self._tokenizer is not None
-        prompt = build_prompt(question, format_context(chunks))
+
+        context = format_context(chunks)
+
+        # 1. Use chat template if available to guide the model cleanly
+        if hasattr(self._tokenizer, "chat_template") and self._tokenizer.chat_template:
+            messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
+            ]
+            prompt = self._tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            prompt = build_prompt(question, context)
+
+        # 2. Tokenize and place input tensors on the model device
         inputs = self._tokenizer(prompt, return_tensors="pt")
+        inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
         input_len = inputs["input_ids"].shape[1]
+
+        # 3. Generate greedily
         out = self._model.generate(
-            **inputs, max_new_tokens=max_new_tokens,
-            do_sample=False, temperature=0.0,
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            pad_token_id=self._tokenizer.eos_token_id,
         )
-        return str(
+
+        decoded = str(
             self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
         ).strip()
 
+        # Strip internal thinking tags (<think>...</think>)
+        if "</think>" in decoded:
+            decoded = decoded.split("</think>")[-1].strip()
 
+        # Clean up any runaway repetition loops
+        for marker in ["\n\nAnswer:", "\nAnswer:", "\n\nQuestion:", "\nQuestion:"]:
+            decoded = decoded.split(marker)[0].strip()
+
+        return decoded
+
+
+# Global cache for the singleton instance
 _CACHE: Dict[str, AnswerGenerator] = {}
 
 
