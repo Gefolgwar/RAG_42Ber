@@ -130,6 +130,8 @@ Full pipeline (mirrors the reference exam scripts):
 
 ```bash
 uv run python -m src index --max_chunk_size 2000
+jq '.word_to_id' data/processed/bm25_index/vocab.tokenizer.json > data/processed/bm25_index/word_to_id.json
+jq '.' data/processed/chunks.json > data/processed/chunks_formatted.json
 uv run python -m src search "How to configure OpenAI server?" --k 2
 uv run python -m src search_dataset \
   --dataset_path data/datasets/UnansweredQuestions/dataset_docs_public.json \
