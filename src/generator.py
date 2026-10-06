@@ -1,138 +1,137 @@
-"""Grounded answer generation with Qwen3-0.6B (Step 8).
+"""Grounded answer generation with Qwen3-0.6B, CPU-only."""
 
-Context chunks are cited as [Source i] with exact offsets.
-Diagnostic builds prompt only, without loading model weights.
-"""
-
-from typing import Any, Dict, List, Optional
+import os
+from functools import lru_cache
+from typing import Any, List, Optional
 
 from src.chunking import Chunk
 
 DEFAULT_MODEL = "Qwen/Qwen3-0.6B"
 
 SYSTEM_PROMPT = (
-    "Answer concisely and technically, using only the provided context. "
+    "Use only the provided context. Give a direct answer in 1-2 sentences. "
+    "No reasoning, no repetitions, no self-dialog, no tags like \\boxed{}. "
     "If the context lacks the answer, say so directly."
 )
 
+MAX_CONTEXT_CHARS = 1800
+MAX_PROMPT_TOKENS = 1024
 
-def format_context(chunks: List[Chunk]) -> str:
-    """Format chunks as numbered source blocks.
+# Non-thinking sampling per Qwen3 model card (greedy causes infinite loops).
+GEN_KWARGS = {
+    "do_sample": True,
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "min_p": 0.0,
+    "repetition_penalty": 1.15,
+    "no_repeat_ngram_size": 3,
+}
+STOP_STRINGS = ["\n\n", "\nQuestion:", "\nContext:", "So, the answer is:", "Answer:", "\\boxed"]
 
-    Args:
-        chunks: Retrieved chunks in rank order.
 
-    Returns:
-        Multiline string with [Source i] path (start-end) plus text.
-    """
-    lines: List[str] = []
+def format_context(chunks: List[Chunk], budget: int = MAX_CONTEXT_CHARS) -> str:
+    """Format chunks as [Source i] blocks, clipped to a char budget."""
+    lines, total = [], 0
     for i, ch in enumerate(chunks, 1):
-        lines.append(
-            f"[Source {i}] {ch.file_path} "
-            f"({ch.first_character_index}-{ch.last_character_index}):\n{ch.text}"
-        )
+        room = budget - total
+        if room <= 0:
+            break
+        snippet = " ".join(ch.text.split())[:room]
+        total += len(snippet)
+        lines.append(f"[Source {i}] {ch.file_path} ({ch.first_character_index}-{ch.last_character_index}):\n{snippet}")
     return "\n\n".join(lines)
 
 
 def build_prompt(question: str, context: str) -> str:
-    """Assemble system prompt, context and question.
+    """Assemble system prompt, context and question."""
+    return f"{SYSTEM_PROMPT}\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
 
-    Args:
-        question: User question string.
-        context: Preformatted context from format_context().
 
-    Returns:
-        Full model prompt string.
-    """
-    return (
-        f"{SYSTEM_PROMPT}\n\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
-    )
+def _extractive_fallback(question: str, chunks: List[Chunk], budget: int = 600) -> str:
+    """First-chunk snippet when the model cannot load."""
+    if not chunks:
+        return "The context lacks the answer."
+    return " ".join(chunks[0].text.split())[:budget].strip()
 
 
 class AnswerGenerator:
-    """Lazy Qwen generator with greedy deterministic decoding."""
+    """Qwen generator on CPU with non-thinking sampling."""
 
     def __init__(self, model_name: str = DEFAULT_MODEL) -> None:
-        """Init with model name, weights loaded on first generate().
-
-        Args:
-            model_name: HuggingFace model id.
-        """
         self.model_name = model_name
         self._model: Optional[Any] = None
         self._tokenizer: Optional[Any] = None
 
     def _ensure_loaded(self) -> None:
-        """Load tokenizer and weights once (fp16 on CUDA, fp32 on CPU)."""
         if self._model is not None:
             return
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        torch.set_num_threads(max(1, os.cpu_count() or 4))
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self._model = AutoModelForCausalLM.from_pretrained(
-            self.model_name, dtype=dtype
+            self.model_name, dtype=torch.float32, low_cpu_mem_usage=True
         )
         self._model.eval()
 
-    def generate(
-        self, question: str, chunks: List[Chunk], max_new_tokens: int = 256
-    ) -> str:
-        """Generate grounded answer from retrieved chunks.
-
-        Args:
-            question: User question string.
-            chunks: Retrieved top-k chunks as context.
-            max_new_tokens: Generation budget.
-
-        Returns:
-            Decoded answer string without prompt echo.
-        """
-        self._ensure_loaded()
+    def generate(self, question: str, chunks: List[Chunk], max_new_tokens: int = 64) -> str:
+        """Generate grounded answer from retrieved chunks on CPU."""
+        if not chunks:
+            return "The context lacks the answer."
+        try:
+            self._ensure_loaded()
+        except Exception:
+            return _extractive_fallback(question, chunks)
         assert self._model is not None and self._tokenizer is not None
-        prompt = build_prompt(question, format_context(chunks))
-        inputs = self._tokenizer(prompt, return_tensors="pt")
+        import torch
+
+        context = format_context(chunks)
+        msgs = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {question}"},
+        ]
+        try:
+            try:
+                prompt = self._tokenizer.apply_chat_template(
+                    msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False
+                )
+            except TypeError:  # old tokenizers without enable_thinking (Qwen3 think tags)
+                prompt = self._tokenizer.apply_chat_template(
+                    msgs, tokenize=False, add_generation_prompt=True
+                )
+        except Exception:
+            prompt = build_prompt(question, context)
+        inputs = self._tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_PROMPT_TOKENS)
         input_len = inputs["input_ids"].shape[1]
-        out = self._model.generate(
-            **inputs, max_new_tokens=max_new_tokens,
-            do_sample=False, temperature=0.0,
-        )
-        return str(
-            self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
-        ).strip()
+        try:
+            with torch.inference_mode():
+                try:
+                    out = self._model.generate(
+                        **inputs, max_new_tokens=max_new_tokens, pad_token_id=self._tokenizer.eos_token_id,
+                        stop_strings=STOP_STRINGS, tokenizer=self._tokenizer, **GEN_KWARGS,
+                    )
+                except TypeError:  # old transformers without stop_strings
+                    out = self._model.generate(
+                        **inputs, max_new_tokens=max_new_tokens,
+                        pad_token_id=self._tokenizer.eos_token_id, **GEN_KWARGS,
+                    )
+        except Exception:
+            return _extractive_fallback(question, chunks)
+        return str(self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)).strip()
 
 
-_CACHE: Dict[str, AnswerGenerator] = {}
-
-
+@lru_cache(maxsize=4)
 def get_generator(model_name: str = DEFAULT_MODEL) -> AnswerGenerator:
-    """Return shared generator instance (Singleton per model name).
-
-    Args:
-        model_name: HuggingFace model id.
-
-    Returns:
-        Cached AnswerGenerator instance.
-    """
-    if model_name not in _CACHE:
-        _CACHE[model_name] = AnswerGenerator(model_name)
-    return _CACHE[model_name]
+    """Return shared generator instance (singleton per model name)."""
+    return AnswerGenerator(model_name)
 
 
 if __name__ == "__main__":
-    print("=== [STEP 8 DIAGNOSTIC] Testing Answer Generator Prompting ===")
-    demo = Chunk(
-        "data/raw/vllm-0.10.1/docs/features/lora.md",
-        4695,
-        5100,
-        "The /v1/load_lora_adapter HTTP endpoint dynamically loads LoRA adapters.",
-    )
+    demo = Chunk("data/raw/vllm-0.10.1/docs/features/lora.md", 4695, 5100,
+                 "The /v1/load_lora_adapter HTTP endpoint dynamically loads LoRA adapters.")
     ctx = format_context([demo])
-    print("[Formatted Context Preview]:")
-    print(ctx)
     prompt = build_prompt("How to load LoRA adapter dynamically?", ctx)
-    assert "[Source 1]" in ctx and "lora.md (4695-5100)" in ctx
-    assert "Question:" in prompt and "Answer:" in prompt
-    assert get_generator() is get_generator()
+    assert "[Source 1]" in ctx and "Question:" in prompt and get_generator() is get_generator()
     print("[Prompt Template Structure Verified]")

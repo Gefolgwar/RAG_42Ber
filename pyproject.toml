@@ -9,7 +9,9 @@ description = "RAG implementation with BM25, Qwen, and FastAPI"
 readme = "README.md"
 requires-python = ">=3.10"
 
-# Основні залежності проєкту (Mandatory + Bonus)
+# Qwen/Qwen3-0.6B — обов'язковий за V.4/VI.3; CPU-only код (жодних
+# викликів CUDA в src/), але сам torch потрібен для інференсу.
+# Бонуси 1-2 (dense/hybrid) потребують sentence-transformers.
 dependencies = [
     "pydantic>=2.6.0",
     "fire>=0.6.0",

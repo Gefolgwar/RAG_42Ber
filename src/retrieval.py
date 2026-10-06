@@ -3,7 +3,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from src.cache import QueryCache
 from src.chunking import Chunk
@@ -35,28 +35,6 @@ def fingerprint(index_directory: str) -> str:
         return ""
 
 
-def real_root(repo_path: str) -> str:
-    """Unwrap doubled extraction nesting."""
-    inner = str(Path(repo_path) / Path(repo_path).name)
-    if Path(inner).is_dir():
-        return inner
-    return repo_path
-
-
-def disk_path(file_path: str, repo_path: str = "data/raw/vllm-0.10.1") -> str:
-    """Map logical file_path to disk location."""
-    if Path(file_path).is_file():
-        return file_path
-    prefix = repo_path.replace("\\", "/").rstrip("/")
-    if not file_path.startswith(prefix + "/"):
-        return ""
-    rel = file_path[len(prefix) + 1:]
-    cand = str(Path(real_root(repo_path)) / rel).replace("\\", "/")
-    if Path(cand).is_file():
-        return cand
-    return ""
-
-
 def chunk_to_source(ch: Chunk) -> MinimalSource:
     """Convert Chunk to output model."""
     return MinimalSource(
@@ -84,7 +62,7 @@ def hybrid_search(
         dense_pairs = dense.search_dense(query, k=k, file_type=file_type)
         if not dense_pairs:
             return bm25_pairs
-        by_key = {}
+        by_key: Dict[str, Tuple[Chunk, float]] = {}
         for ch, sc in bm25_pairs + dense_pairs:
             by_key.setdefault(chunk_key(ch), (ch, sc))
         fused = rrf_fuse(
@@ -119,21 +97,37 @@ def search_cached(
     return sources
 
 
-def resolve_chunks(sources: List[MinimalSource], index_directory: str) -> List[Chunk]:
-    """Map sources back to texts via index or disk."""
+_SPAN_CACHE: Dict[str, Dict[Tuple[str, int], Chunk]] = {}
+
+
+def _span_map(index_directory: str) -> Dict[Tuple[str, int], Chunk]:
+    """Load chunk span map once per index directory (CPU fast path)."""
+    hit = _SPAN_CACHE.get(index_directory)
+    if hit is not None:
+        return hit
     try:
         kb = KnowledgeBase.load(index_directory)
-        by_span = {(c.file_path, c.first_character_index): c for c in kb.chunks}
+        by_span: Dict[Tuple[str, int], Chunk] = {
+            (c.file_path, c.first_character_index): c for c in kb.chunks
+        }
     except Exception:
         by_span = {}
+    _SPAN_CACHE[index_directory] = by_span
+    return by_span
+
+
+def resolve_chunks(sources: List[MinimalSource], index_directory: str) -> List[Chunk]:
+    """Map sources back to texts via index or disk."""
+    by_span = _span_map(index_directory)
     out: List[Chunk] = []
     for src in sources:
         hit = by_span.get((src.file_path, src.first_character_index))
         if hit is not None and hit.last_character_index == src.last_character_index:
             out.append(hit)
             continue
-        disk = disk_path(src.file_path)
-        text = read_file_safely(disk) if disk else ""
+        # file_path is verbatim corpus path (data/raw/vllm-0.10.1/...),
+        # which is also the disk location relative to project root.
+        text = read_file_safely(src.file_path)
         span = text[src.first_character_index:src.last_character_index]
         out.append(Chunk(src.file_path, src.first_character_index,
                          src.last_character_index, span))

@@ -104,10 +104,10 @@ Measured on this machine (corpus: 1952 files -> 28,837 chunks):
 
 ## Challenges Faced
 
-1. **Doubled corpus prefix** (`vllm-0.10.1/vllm-0.10.1/` from archive
-   extraction) broke verbatim `file_path` matching. Solved with
-   `_real_root()` nesting detection: logical paths stay
-   `data/raw/vllm-0.10.1/...` while disk reads resolve inward.
+1. **Verbatim `file_path` matching**: grader compares paths exactly
+   (`data/raw/vllm-0.10.1/...`). Solved by collecting with
+   `relative_to="."`, so logical paths equal disk paths — no mapping
+   helpers needed.
 2. **Lint scope**: `mypy .` / `flake8 .` scanned the vendored corpus and
    failed; `Makefile` lint now targets `src api` with `max-line-length=100`.
 3. **Dense cost**: 28k-vector CPU encoding threatened the 5-minute budget,
@@ -315,9 +315,9 @@ print('total_sources:',len(L),'max_len:',max(L), \
 Watch: `<DatasetScope>` (`UnansweredQuestions` vs `AnsweredQuestions`) is
 mandatory — both public datasets share filenames, so an unscoped
 `--save_directory` silently overwrites the previous run. Every
-`file_path` must read exactly `data/raw/vllm-0.10.1/...` (this repo's
-archive extracts one level deeper; `_real_root()` normalizes it — if you
-re-ingest a differently nested corpus and paths come out doubled, recall
+`file_path` must read exactly `data/raw/vllm-0.10.1/...` (logical path
+equals disk path relative to project root — if you re-ingest a
+differently nested corpus and paths come out doubled, recall
 drops to ~0).
 
 ### Phase 6 — Bonus verification (each must be *demonstrated*, not described)
