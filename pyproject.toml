@@ -10,22 +10,30 @@ readme = "README.md"
 requires-python = ">=3.10"
 
 # Qwen/Qwen3-0.6B — обов'язковий за V.4/VI.3; CPU-only код (жодних
-# викликів CUDA в src/), але сам torch потрібен для інференсу.
-# Бонуси 1-2 (dense/hybrid) потребують sentence-transformers.
+# викликів CUDA в src/) + CPU-only wheel torch з pytorch-cpu індексу
+# (без nvidia/cuda/triton). accelerate/pystemmer прибрані: 0 імпортів.
+# Бонуси 1-2 (dense/hybrid) потребують sentence-transformers (залишено
+# в default, бо moulinette запускає лише `uv sync` без --extra).
 dependencies = [
     "pydantic>=2.6.0",
     "fire>=0.6.0",
     "tqdm>=4.66.0",
     "bm25s>=0.2.0",
-    "pystemmer>=2.2.0",
     "torch>=2.2.0",
     "transformers>=4.44.0",
-    "accelerate>=0.30.0",
     "sentence-transformers>=2.7.0",
     "numpy>=1.26.0",
     "fastapi>=0.110.0",
     "uvicorn>=0.28.0",
 ]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
 
 # Залежності для розробки, перевірки типізації та тестування (Chapter V.1)
 [dependency-groups]
