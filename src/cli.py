@@ -25,9 +25,10 @@ class CLI:
         k: int = 10,
         index_directory: str = "data/processed",
         file_type: str = "all",
+        hybrid: bool = False,
     ) -> None:
         """Return top-k sources as JSON list."""
-        run_search(query, k, index_directory, file_type)
+        run_search(query, k, index_directory, file_type, hybrid)
 
     def search_dataset(
         self,
@@ -36,18 +37,22 @@ class CLI:
         save_directory: str = "data/output/search_results",
         index_directory: str = "data/processed",
         file_type: str = "all",
+        hybrid: bool = False,
     ) -> None:
         """Search dataset and write results JSON."""
-        run_search_dataset(dataset_path, k, save_directory, index_directory, file_type)
+        run_search_dataset(
+            dataset_path, k, save_directory, index_directory, file_type, hybrid
+        )
 
     def answer(
         self,
         query: str = "",
         k: int = 5,
         index_directory: str = "data/processed",
+        hybrid: bool = False,
     ) -> None:
         """Answer single query."""
-        run_answer(query, k, index_directory)
+        run_answer(query, k, index_directory, hybrid)
 
     def answer_dataset(
         self,

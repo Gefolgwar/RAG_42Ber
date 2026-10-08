@@ -10,7 +10,9 @@ from src.models import MinimalSearchResults, StudentSearchResults
 from src.retrieval import err, fingerprint, load_kb, search_cached
 
 
-def run_search(query: str, k: int, index_directory: str, file_type: str) -> None:
+def run_search(
+    query: str, k: int, index_directory: str, file_type: str, hybrid: bool = False
+) -> None:
     """Print top-k sources as JSON list."""
     try:
         if not query or not query.strip() or k <= 0:
@@ -25,7 +27,7 @@ def run_search(query: str, k: int, index_directory: str, file_type: str) -> None
             print("[]")
             return
         cache = QueryCache(fingerprint=fingerprint(index_directory))
-        sources = search_cached(kb, query, k, file_type, cache, index_directory)
+        sources = search_cached(kb, query, k, file_type, cache, index_directory, hybrid)
         print(json.dumps([s.model_dump() for s in sources]))
     except Exception as exc:
         err(f"search failed: {exc}")
@@ -33,7 +35,12 @@ def run_search(query: str, k: int, index_directory: str, file_type: str) -> None
 
 
 def run_search_dataset(
-    dataset_path: str, k: int, save_directory: str, index_directory: str, file_type: str
+    dataset_path: str,
+    k: int,
+    save_directory: str,
+    index_directory: str,
+    file_type: str,
+    hybrid: bool = False,
 ) -> None:
     """Search dataset and write results JSON."""
     try:
@@ -53,7 +60,9 @@ def run_search_dataset(
                 qid = str(q.get("question_id", ""))
                 text = str(q.get("question", ""))
                 if text:
-                    srcs = search_cached(kb, text, k, file_type, cache, index_directory)
+                    srcs = search_cached(
+                        kb, text, k, file_type, cache, index_directory, hybrid
+                    )
                 else:
                     srcs = []
                 results.append(MinimalSearchResults(

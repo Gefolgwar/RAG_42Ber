@@ -89,14 +89,17 @@ def collect_files(
         the safely decoded file content.
     """
     results: List[Tuple[str, str]] = []
+
     for fs_path in iter_files(root, file_type=file_type):
         try:
             rel: str = os.path.relpath(fs_path, relative_to)
         except ValueError:
             continue
+
         rel = rel.replace(os.sep, "/")
         text: str = read_file_safely(fs_path)
         results.append((rel, text))
+
     return results
 
 

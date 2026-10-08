@@ -17,7 +17,8 @@ def compute_hash(text: str) -> str:
 
 
 def diff_hashes(
-    old_hashes: Dict[str, str], current_hashes: Dict[str, str]
+    old_hashes: Dict[str, str],
+    current_hashes: Dict[str, str]
 ) -> Tuple[Set[str], Set[str]]:
     """Diff two path->hash maps.
 
@@ -36,7 +37,8 @@ def diff_hashes(
 
 
 def hashes_for(
-    files: List[Tuple[str, str]], file_hashes: Dict[str, str] | None = None
+    files: List[Tuple[str, str]],
+    file_hashes: Dict[str, str] | None = None
 ) -> Dict[str, str]:
     """Build path->hash map for collected files.
 

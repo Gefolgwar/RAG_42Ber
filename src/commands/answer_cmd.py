@@ -6,10 +6,10 @@ from pathlib import Path
 from tqdm import tqdm
 
 from src.models import MinimalAnswer, MinimalSource, StudentSearchResultsAndAnswer
-from src.retrieval import chunk_to_source, err, load_kb, resolve_chunks
+from src.retrieval import chunk_to_source, err, hybrid_search, load_kb, resolve_chunks
 
 
-def run_answer(query: str, k: int, index_directory: str) -> None:
+def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -> None:
     """Answer single query as JSON."""
     try:
         if not query or not query.strip() or k <= 0:
@@ -18,7 +18,10 @@ def run_answer(query: str, k: int, index_directory: str) -> None:
         kb = load_kb(index_directory)
         if kb is None:
             return
-        pairs = kb.search_bm25(query, k=k)
+        if hybrid:
+            pairs = hybrid_search(kb, query, k, "all", index_directory)
+        else:
+            pairs = kb.search_bm25(query, k=k)
         chunks = [ch for ch, _ in pairs]
         try:
             from src.generator import get_generator

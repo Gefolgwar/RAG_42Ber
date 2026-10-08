@@ -29,25 +29,36 @@ class KnowledgeBase:
         self.tokenizer = build_tokenizer()
         self.retriever: Any = bm25s.BM25()
 
-    def build(self) -> None:
+    def build(self, show_progress: bool = True) -> None:
         """Index chunk texts enriched with file paths."""
         if not self.chunks:
             return
-        texts = [f"{c.file_path} {c.text}" for c in self.chunks]
-        tokens = self.tokenizer.tokenize(texts, return_as="tuple")
-        self.retriever.index(tokens)
+        
+        # for с in self.chunks[:10]:
+        #     print(f"Chunk: {с.file_path} [{с.first_character_index}:{с.last_character_index}]")
+        #     print(f"Text: {repr(с.text[:100])}\n")
 
-    def save(self, directory: str) -> None:
+        texts = [f"{c.file_path} {c.text}" for c in self.chunks]
+        tokens = self.tokenizer.tokenize(
+            texts, return_as="tuple", show_progress=show_progress
+        )
+        self.retriever.index(tokens, show_progress=show_progress)
+
+    def save(self, directory: str, show_progress: bool = True) -> None:
         """Persist chunks, meta and BM25 files under directory.
 
         Args:
             directory: Target directory (created if missing).
+            show_progress: Show progress bar while writing index files.
         """
         root = Path(directory)
         idx_dir = root / "bm25_index"
         idx_dir.mkdir(parents=True, exist_ok=True)
-        self.retriever.save(str(idx_dir), show_progress=False)
+        # Save BM25 index
+        self.retriever.save(str(idx_dir), show_progress=show_progress)
+        # Save vocab
         self.tokenizer.save_vocab(str(idx_dir))
+        # Save chunks
         payload = [c.__dict__ for c in self.chunks]
         (root / "chunks.json").write_text(
             json.dumps(payload, ensure_ascii=False), encoding="utf-8"
@@ -71,8 +82,11 @@ class KnowledgeBase:
         root = Path(directory)
         idx_dir = root / "bm25_index"
         kb = cls([])
+        # Load BM25 index
         kb.retriever = bm25s.BM25.load(str(idx_dir), load_corpus=False)
+        # Load tokenizer vocab
         kb.tokenizer = build_tokenizer()
+        # Load chunks
         kb.tokenizer.load_vocab(str(idx_dir))
         raw: List[dict[str, Any]] = json.loads(
             (root / "chunks.json").read_text(encoding="utf-8")

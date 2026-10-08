@@ -1,5 +1,6 @@
 """Dense embeddings and hybrid RRF fusion (Bonus 1 and 2)."""
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -10,6 +11,14 @@ from src.file_filter import matches
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 RRF_K = 60
+
+
+@lru_cache(maxsize=1)
+def get_model():  # type: ignore[no-untyped-def]
+    """Return shared SentenceTransformer instance (loaded once)."""
+    from sentence_transformers import SentenceTransformer
+
+    return SentenceTransformer(MODEL_NAME)
 
 
 def _norm_rows(mat: np.ndarray) -> np.ndarray:
@@ -32,15 +41,22 @@ class DenseIndex:
         self.chunks: List[Chunk] = list(chunks) if chunks else []
         self.embeddings = np.zeros((0, 384), dtype=np.float32)
 
-    def build(self) -> None:
+    def build(self, show_progress: bool = True, batch_size: int = 32) -> None:
         """Encode chunk texts (file path prepended) into embeddings."""
         if not self.chunks:
             return
-        from sentence_transformers import SentenceTransformer
+        from tqdm import tqdm
 
-        model = SentenceTransformer(MODEL_NAME)
+        tqdm.write(f"Loading dense model '{MODEL_NAME}'...")
+        model = get_model()
         texts = [f"{c.file_path} {c.text}" for c in self.chunks]
-        vecs = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
+        tqdm.write(f"Encoding {len(texts)} chunks...")
+        vecs = model.encode(
+            texts,
+            show_progress_bar=show_progress,
+            batch_size=batch_size,
+            convert_to_numpy=True,
+        )
         self.embeddings = np.asarray(vecs, dtype=np.float32)
 
     def save(self, directory: str) -> None:
@@ -89,11 +105,9 @@ class DenseIndex:
         Returns:
             Ranked (chunk, cosine score) pairs.
         """
-        from sentence_transformers import SentenceTransformer
-
         if not query or not query.strip() or k <= 0 or not self.chunks:
             return []
-        model = SentenceTransformer(MODEL_NAME)
+        model = get_model()
         qv = np.asarray(model.encode([query], convert_to_numpy=True), dtype=np.float32)
         mat = _norm_rows(self.embeddings)
         qn = _norm_rows(qv)
@@ -106,6 +120,12 @@ class DenseIndex:
             if len(out) >= k:
                 break
         return out
+
+
+@lru_cache(maxsize=4)
+def load_dense_cached(directory: str) -> "DenseIndex":
+    """Return shared DenseIndex instance (embeddings loaded once)."""
+    return DenseIndex.load(directory)
 
 
 def rrf_fuse(

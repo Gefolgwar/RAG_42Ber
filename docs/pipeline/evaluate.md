@@ -6,6 +6,17 @@
 ```bash
 uv run python -m src evaluate --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_docs_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json
 ```
+```bash
+uv run python -m src evaluate --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_code_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json
+```
+
+hybrid
+```bash
+uv run python -m src evaluate --student_search_results_path data/output/search_results/hybrid/UnansweredQuestions/dataset_docs_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json
+```
+```bash
+uv run python -m src evaluate --student_search_results_path data/output/search_results/hybrid/UnansweredQuestions/dataset_code_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json
+```
 
 Задіяні файли:
 

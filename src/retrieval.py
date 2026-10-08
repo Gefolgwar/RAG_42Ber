@@ -55,9 +55,9 @@ def hybrid_search(
     """Fuse BM25 and dense with RRF, fallback to BM25."""
     bm25_pairs = kb.search_bm25(query, k=k, file_type=file_type)
     try:
-        from src.dense import DenseIndex, rrf_fuse
+        from src.dense import load_dense_cached, rrf_fuse
 
-        dense = DenseIndex.load(str(Path(index_dir) / "dense_index"))
+        dense = load_dense_cached(str(Path(index_dir) / "dense_index"))
         dense.chunks = kb.chunks
         dense_pairs = dense.search_dense(query, k=k, file_type=file_type)
         if not dense_pairs:
@@ -85,7 +85,7 @@ def search_cached(
     hybrid: bool = False,
 ) -> List[MinimalSource]:
     """Search with cache, store on miss."""
-    hit = cache.get(query, k)
+    hit = cache.get(query, k, hybrid)
     if hit is not None:
         return hit[: max(k, 0)]
     if hybrid:
@@ -93,7 +93,7 @@ def search_cached(
     else:
         pairs = kb.search_bm25(query, k=k, file_type=file_type)
     sources = [chunk_to_source(ch) for ch, _ in pairs]
-    cache.put(query, k, sources)
+    cache.put(query, k, sources, hybrid)
     return sources
 
 
