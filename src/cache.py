@@ -21,9 +21,12 @@ def cache_key(query: str, k: int, hybrid: bool = False) -> str:
     Returns:
         Hex digest key string.
     """
+    # example: "how to configure:5" or "how to configure:5:hybrid"
     norm = f"{query.strip().lower()}:{k}"
     if hybrid:
         norm += ":hybrid"
+    # 3. Convert to SHA-256 hash (64 hex characters).
+    # errors="replace" protect from invalid characters.
     return hashlib.sha256(norm.encode("utf-8", errors="replace")).hexdigest()
 
 
