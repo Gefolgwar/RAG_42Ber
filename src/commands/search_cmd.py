@@ -26,6 +26,7 @@ def run_search(
         if kb is None:
             print("[]")
             return
+        # fingerprint(...) read 'created_at' from data/processed/meta.json.
         cache = QueryCache(fingerprint=fingerprint(index_directory))
         sources = search_cached(kb, query, k, file_type, cache, index_directory, hybrid)
         print(json.dumps([s.model_dump() for s in sources]))

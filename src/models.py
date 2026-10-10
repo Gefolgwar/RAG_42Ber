@@ -24,16 +24,13 @@ class MinimalSource(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     file_path: str = Field(
-        ...,
         description="Exact file path relative to repo root (e.g. data/raw/...)",
     )
     first_character_index: int = Field(
-        ...,
         ge=0,
         description="Starting character position (inclusive)",
     )
     last_character_index: int = Field(
-        ...,
         ge=0,
         description="Ending character position (exclusive)",
     )
@@ -47,7 +44,6 @@ class UnansweredQuestion(BaseModel):
         description="Unique identifier for the question",
     )
     question: str = Field(
-        ...,
         description="Question text",
     )
 
@@ -60,7 +56,6 @@ class AnsweredQuestion(UnansweredQuestion):
         description="Ground truth source locations",
     )
     answer: str = Field(
-        ...,
         description="Reference ground truth answer",
     )
 
@@ -89,7 +84,6 @@ class MinimalAnswer(MinimalSearchResults):
     """Search results combined with the generated model answer."""
 
     answer: str = Field(
-        ...,
         description="Generated natural language answer",
     )
 
@@ -102,7 +96,6 @@ class StudentSearchResults(BaseModel):
         description="List of search results per question",
     )
     k: int = Field(
-        ...,
         ge=0,
         description="Number of results requested",
     )
@@ -116,7 +109,6 @@ class StudentSearchResultsAndAnswer(BaseModel):
         description="List of answers with retrieved sources per question",
     )
     k: int = Field(
-        ...,
         ge=0,
         description="Number of results requested",
     )

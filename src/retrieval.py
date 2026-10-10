@@ -85,9 +85,11 @@ def search_cached(
     hybrid: bool = False,
 ) -> List[MinimalSource]:
     """Search with cache, store on miss."""
+    #1 cache exist
     hit = cache.get(query, k, hybrid)
     if hit is not None:
         return hit[: max(k, 0)]
+    # 2. Cache MISS
     if hybrid:
         pairs = hybrid_search(kb, query, k, file_type, index_dir)
     else:
