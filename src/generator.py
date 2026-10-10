@@ -5,6 +5,8 @@ from functools import lru_cache
 from typing import Any, List, Optional
 
 from src.chunking import Chunk
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 DEFAULT_MODEL = "Qwen/Qwen3-0.6B"
 
@@ -66,8 +68,6 @@ class AnswerGenerator:
     def _ensure_loaded(self) -> None:
         if self._model is not None:
             return
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
 
         torch.set_num_threads(max(1, os.cpu_count() or 4))
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
