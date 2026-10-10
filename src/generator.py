@@ -19,13 +19,13 @@ MAX_PROMPT_TOKENS = 1024
 
 # Non-thinking sampling per Qwen3 model card (greedy causes infinite loops).
 GEN_KWARGS = {
-    "do_sample": True,
+    "do_sample": True, # prevents infinite loops
     "temperature": 0.7,
-    "top_p": 0.8,
-    "top_k": 20,
-    "min_p": 0.0,
-    "repetition_penalty": 1.15,
-    "no_repeat_ngram_size": 3,
+    "top_p": 0.8, # selecting from a pool with a total probability of 80%
+    "top_k": 20, # selecting from the top 20 candidates
+    "min_p": 0.0, # same as top_p but for the minimum probability of the candidate pool - NOW OFF
+    "repetition_penalty": 1.15, # penalizes repeating the same tokens
+    "no_repeat_ngram_size": 3, # prevents repeating the same 3-words
 }
 STOP_STRINGS = ["\n\n", "\nQuestion:", "\nContext:", "So, the answer is:", "Answer:", "\\boxed"]
 
@@ -40,6 +40,7 @@ def format_context(chunks: List[Chunk], budget: int = MAX_CONTEXT_CHARS) -> str:
         snippet = " ".join(ch.text.split())[:room]
         total += len(snippet)
         lines.append(f"[Source {i}] {ch.file_path} ({ch.first_character_index}-{ch.last_character_index}):\n{snippet}")
+        print(lines[:5])  # debug: print first 5 lines of context
     return "\n\n".join(lines)
 
 

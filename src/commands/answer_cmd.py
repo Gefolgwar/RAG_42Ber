@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from src.models import MinimalAnswer, MinimalSource, StudentSearchResultsAndAnswer
 from src.retrieval import chunk_to_source, err, hybrid_search, load_kb, resolve_chunks
+from src.generator import get_generator
 
 
 def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -> None:
@@ -15,7 +16,9 @@ def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -
         if not query or not query.strip() or k <= 0:
             print(json.dumps({"question": query, "answer": "", "sources": []}))
             return
+        
         kb = load_kb(index_directory)
+        
         if kb is None:
             return
         if hybrid:
@@ -24,8 +27,6 @@ def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -
             pairs = kb.search_bm25(query, k=k)
         chunks = [ch for ch, _ in pairs]
         try:
-            from src.generator import get_generator
-
             text = get_generator().generate(query, chunks)
         except Exception as exc:
             err(f"generation failed: {exc}")
@@ -50,8 +51,6 @@ def run_answer_dataset(
             return
         entries = data.get("search_results", []) if isinstance(data, dict) else []
         kk = int(data.get("k", 5)) if isinstance(data, dict) else 5
-        from src.generator import get_generator
-
         gen = get_generator()
         answers = []
         print(f"Loaded {len(entries)} questions ...")

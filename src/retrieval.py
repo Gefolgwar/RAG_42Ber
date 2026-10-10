@@ -10,6 +10,7 @@ from src.chunking import Chunk
 from src.index import KnowledgeBase
 from src.ingest import read_file_safely
 from src.models import MinimalSource
+from src.dense import load_dense_cached, rrf_fuse
 
 
 def err(msg: str) -> None:
@@ -55,8 +56,6 @@ def hybrid_search(
     """Fuse BM25 and dense with RRF, fallback to BM25."""
     bm25_pairs = kb.search_bm25(query, k=k, file_type=file_type)
     try:
-        from src.dense import load_dense_cached, rrf_fuse
-
         dense = load_dense_cached(str(Path(index_dir) / "dense_index"))
         dense.chunks = kb.chunks
         dense_pairs = dense.search_dense(query, k=k, file_type=file_type)
