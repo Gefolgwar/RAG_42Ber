@@ -15,6 +15,12 @@ Goal: reach at least 80% Recall@5 on docs questions and 50% on code
 questions, with indexing under 5 minutes and 200-question retrieval under
 90 seconds.
 
+
+## Diagram
+[![Architecture diagram](https://gitdiagram.com/diagram-badge.svg)](https://gitdiagram.com/gefolgwar/rag_42ber?utm_source=readme&utm_medium=badge)
+
+[![Architecture diagram of gefolgwar/rag_42ber](https://gitdiagram.com/gefolgwar/rag_42ber/diagram.png)](https://gitdiagram.com/gefolgwar/rag_42ber?utm_source=readme&utm_medium=picture)
+
 ## System Architecture
 
 ```text

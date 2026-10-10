@@ -40,7 +40,6 @@ def format_context(chunks: List[Chunk], budget: int = MAX_CONTEXT_CHARS) -> str:
         snippet = " ".join(ch.text.split())[:room]
         total += len(snippet)
         lines.append(f"[Source {i}] {ch.file_path} ({ch.first_character_index}-{ch.last_character_index}):\n{snippet}")
-        print(lines[:5])  # debug: print first 5 lines of context
     return "\n\n".join(lines)
 
 
@@ -98,7 +97,7 @@ class AnswerGenerator:
                 prompt = self._tokenizer.apply_chat_template(
                     msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False
                 )
-            except TypeError:  # old tokenizers without enable_thinking (Qwen3 think tags)
+            except TypeError:
                 prompt = self._tokenizer.apply_chat_template(
                     msgs, tokenize=False, add_generation_prompt=True
                 )
