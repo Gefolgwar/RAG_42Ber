@@ -103,20 +103,20 @@ class AnswerGenerator:
                 )
         except Exception:
             prompt = build_prompt(question, context)
+        # Making tensors for with size limitation
         inputs = self._tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_PROMPT_TOKENS)
         input_len = inputs["input_ids"].shape[1]
         try:
+        # Generationg answers with the model
             with torch.inference_mode():
-                try:
-                    out = self._model.generate(
-                        **inputs, max_new_tokens=max_new_tokens, pad_token_id=self._tokenizer.eos_token_id,
-                        stop_strings=STOP_STRINGS, tokenizer=self._tokenizer, **GEN_KWARGS,
-                    )
-                except TypeError:  # old transformers without stop_strings
-                    out = self._model.generate(
-                        **inputs, max_new_tokens=max_new_tokens,
-                        pad_token_id=self._tokenizer.eos_token_id, **GEN_KWARGS,
-                    )
+                out = self._model.generate(
+                    **inputs,
+                    max_new_tokens=max_new_tokens,
+                    pad_token_id=self._tokenizer.eos_token_id,
+                    stop_strings=STOP_STRINGS,
+                    tokenizer=self._tokenizer,
+                    **GEN_KWARGS,
+                )
         except Exception:
             return _extractive_fallback(question, chunks)
         return str(self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)).strip()
@@ -126,12 +126,3 @@ class AnswerGenerator:
 def get_generator(model_name: str = DEFAULT_MODEL) -> AnswerGenerator:
     """Return shared generator instance (singleton per model name)."""
     return AnswerGenerator(model_name)
-
-
-if __name__ == "__main__":
-    demo = Chunk("data/raw/vllm-0.10.1/docs/features/lora.md", 4695, 5100,
-                 "The /v1/load_lora_adapter HTTP endpoint dynamically loads LoRA adapters.")
-    ctx = format_context([demo])
-    prompt = build_prompt("How to load LoRA adapter dynamically?", ctx)
-    assert "[Source 1]" in ctx and "Question:" in prompt and get_generator() is get_generator()
-    print("[Prompt Template Structure Verified]")

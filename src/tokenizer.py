@@ -20,21 +20,3 @@ def build_tokenizer() -> Tokenizer:
         stopwords="english",
         stemmer=None,
     )
-
-
-if __name__ == "__main__":
-    tok = build_tokenizer()
-    demo = tok.tokenize(
-        ["Hello WORLD", "What does VLLM_RPC_TIMEOUT default to?"],
-        return_as="string",
-        show_progress=False,
-    )
-    print("=== [STEP 3 DIAGNOSTIC] Testing Minimal Tokenizer ===")
-    for text, tokens in zip(
-        ["Hello WORLD", "What does VLLM_RPC_TIMEOUT default to?"], demo
-    ):
-        print(f"[Query] {text}")
-        print(f"  -> {tokens} ({len(tokens)} tokens)")
-    assert demo[0] == ["hello", "world"]
-    assert "vllm_rpc_timeout" in demo[1]
-    print("[OK] Minimal tokenizer checks passed!")

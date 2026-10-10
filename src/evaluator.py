@@ -102,26 +102,3 @@ def evaluate(
         )
         recalls[int(k)] = total / n if n else 0.0
     return EvalReport(recalls=recalls, num_questions=n)
-
-
-if __name__ == "__main__":
-    print("=== [STEP 7 DIAGNOSTIC] Testing Recall Evaluator Logic ===")
-    truth = MinimalSource(
-        file_path="docs/a.md", first_character_index=100, last_character_index=200
-    )
-    partial = MinimalSource(
-        file_path="docs/a.md", first_character_index=150, last_character_index=250
-    )
-    other = MinimalSource(
-        file_path="docs/b.md", first_character_index=100, last_character_index=200
-    )
-    part_score = overlap_ratio(partial, truth)
-    print(f"Overlap for partial match (50 chars of 100): {part_score:.2f} "
-          f"(Threshold is {THRESHOLD:.2f})")
-    other_score = overlap_ratio(other, truth)
-    print(f"Overlap for different file: {other_score:.2f}")
-    assert abs(part_score - 0.50) < 1e-9
-    assert other_score == 0.0
-    assert recall_at_k([partial, other], [truth], k=1) == 1.0
-    assert recall_at_k([other], [truth], k=1) == 0.0
-    print("[Verification] Overlap ratio and path matching tests passed!")

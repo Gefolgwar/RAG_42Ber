@@ -120,30 +120,3 @@ class KnowledgeBase:
             if len(out) >= k:
                 break
         return out
-
-
-if __name__ == "__main__":
-    import shutil
-
-    print("=== [STEP 6 DIAGNOSTIC] Testing BM25s Indexing & Search ===")
-    demo = [
-        Chunk("docs/lora.md", 100, 300, "load LoRA adapter weights dynamically"),
-        Chunk("vllm/entrypoints/api.py", 50, 200, "entrypoint server code"),
-        Chunk("docs/other.md", 0, 50, "unrelated cooking recipe"),
-    ]
-    kb = KnowledgeBase(demo)
-    kb.build()
-    test_dir = "data/processed/test_index"
-    kb.save(test_dir)
-    print(f"[Index] Saved index and {len(demo)} chunks to {test_dir}/")
-    kb2 = KnowledgeBase.load(test_dir)
-    print(f"[OK] Index reloaded successfully. Total chunks: {len(kb2.chunks)}")
-    q = "How to load LoRA adapter dynamically?"
-    print(f"[Search Query]: '{q}'")
-    hits = kb2.search_bm25(q, k=2)
-    assert hits and hits[0][0].file_path == "docs/lora.md"
-    for rank, (ch, sc) in enumerate(hits, 1):
-        print(f"  Rank #{rank} (Score: {sc:.2f}): "
-              f"Path: {ch.file_path} [{ch.first_character_index}:"
-              f"{ch.last_character_index}]")
-    shutil.rmtree(test_dir, ignore_errors=True)

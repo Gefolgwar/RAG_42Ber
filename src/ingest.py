@@ -101,31 +101,3 @@ def collect_files(
         results.append((rel, text))
 
     return results
-
-
-if __name__ == "__main__":
-    from tqdm import tqdm
-
-    print("=== [STEP 4 DIAGNOSTIC] Testing File Ingestion ===")
-    corpus_root: str = "data/raw"
-    try:
-        file_list: List[str] = list(
-            tqdm(
-                iter_files(corpus_root),
-                desc="Collecting corpus files",
-                unit="file",
-            )
-        )
-    except OSError as exc:
-        print(f"[ERROR] Cannot scan corpus root '{corpus_root}': {exc}")
-        raise SystemExit(1)
-    print(f"[Summary] Total files discovered: {len(file_list)}")
-    print("[First 5 files]:")
-    for fs_path in file_list[:5]:
-        rel_path: str = os.path.relpath(fs_path, ".").replace(os.sep, "/")
-        content: str = read_file_safely(fs_path)
-        line_count: int = content.count("\n") + (1 if content else 0)
-        print(
-            f"  - Path: {rel_path} | "
-            f"Length: {len(content)} chars | Lines: {line_count}"
-        )
