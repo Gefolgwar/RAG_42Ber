@@ -94,7 +94,7 @@ Measured on this machine (corpus: 1952 files -> 28,837 chunks):
 
 ## Design decisions
 
-- **No heavy frameworks** (no LangChain, no Ollama daemon): direct `ast (Abstract Syntax Tree)`
+- **No heavy frameworks**: direct `ast (Abstract Syntax Tree)`
   parsing, header splitting and `bm25s` keep the pipeline reproducible under
   Moulinette's isolated check.
 - **Frozen Pydantic sources**: `MinimalSource(frozen=True)` enables `set()`
