@@ -3,9 +3,13 @@
 from typing import List, Any
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+
 from pydantic import BaseModel
 
+from src.generator import get_generator
 from src.retrieval import chunk_to_source, load_kb
+
 
 app = FastAPI(title="RAG Against the Machine")
 
@@ -42,8 +46,6 @@ def search(req: SearchRequest) -> SearchResponse:
         srcs = [chunk_to_source(ch).model_dump() for ch, _ in pairs]
         return SearchResponse(query=req.query, sources=srcs)
     except Exception as exc:
-        from fastapi.responses import JSONResponse
-
         return JSONResponse(status_code=500, content={"error": str(exc)})  # type: ignore
 
 
@@ -51,10 +53,6 @@ def search(req: SearchRequest) -> SearchResponse:
 def answer(req: SearchRequest) -> AnswerResponse:
     """Answer a query from top-k context."""
     try:
-        from fastapi.responses import JSONResponse
-
-        from src.generator import get_generator
-
         kb = load_kb("data/processed")
         if kb is None or not req.query.strip():
             return AnswerResponse(query=req.query, answer="")

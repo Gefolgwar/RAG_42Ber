@@ -3,12 +3,16 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Tuple
+import json
 
 import numpy as np
 import numpy.typing as npt  # avoid mypy erros
 
 from src.chunking import Chunk
 from src.file_filter import matches
+from tqdm import tqdm
+
+from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 RRF_K = 60
@@ -17,8 +21,6 @@ RRF_K = 60
 @lru_cache(maxsize=1)
 def get_model():  # type: ignore[no-untyped-def]
     """Return shared SentenceTransformer instance (loaded once)."""
-    from sentence_transformers import SentenceTransformer
-
     return SentenceTransformer(MODEL_NAME)
 
 
@@ -46,7 +48,6 @@ class DenseIndex:
         """Encode chunk texts (file path prepended) into embeddings."""
         if not self.chunks:
             return
-        from tqdm import tqdm
 
         tqdm.write(f"Loading dense model '{MODEL_NAME}'...")
         model = get_model()
@@ -69,7 +70,6 @@ class DenseIndex:
         root = Path(directory)
         root.mkdir(parents=True, exist_ok=True)
         np.save(str(root / "embeddings.npy"), self.embeddings)
-        import json
 
         order = [c.__dict__ for c in self.chunks]
         (root / "order.json").write_text(json.dumps(order), encoding="utf-8")
@@ -84,8 +84,6 @@ class DenseIndex:
         Returns:
             DenseIndex with embeddings and chunks restored.
         """
-        import json
-
         root = Path(directory)
         idx = cls([])
         idx.embeddings = np.load(str(root / "embeddings.npy"))

@@ -34,7 +34,7 @@ data/raw/vllm-0.10.1
   -> evaluate (Recall@1/3/5/10 vs ground truth)
 ```
 
-Components (`src/`, each 50-150 lines):
+Components (`src/`):
 
 | Module | Role |
 |---|---|
@@ -94,7 +94,7 @@ Measured on this machine (corpus: 1952 files -> 28,837 chunks):
 
 ## Design decisions
 
-- **No heavy frameworks** (no LangChain, no Ollama daemon): direct `ast`
+- **No heavy frameworks** (no LangChain, no Ollama daemon): direct `ast (Abstract Syntax Tree)`
   parsing, header splitting and `bm25s` keep the pipeline reproducible under
   Moulinette's isolated check.
 - **Frozen Pydantic sources**: `MinimalSource(frozen=True)` enables `set()`
@@ -151,7 +151,7 @@ make api       # Bonus 5: FastAPI on :8000 (/search, /answer)
 # or
 uv run uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
 # than
-$ curl -X POST localhost:8000/search -H "Content-Type: application/json" -d '{"query": "How to configure LoRA?", "k": 2}'
+curl -X POST localhost:8000/search -H "Content-Type: application/json" -d '{"query": "How to configure LoRA?", "k": 2}'
 ```
 
 ## Example usage
