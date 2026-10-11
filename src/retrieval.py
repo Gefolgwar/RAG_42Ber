@@ -84,7 +84,7 @@ def search_cached(
     hybrid: bool = False,
 ) -> List[MinimalSource]:
     """Search with cache, store on miss."""
-    #1 cache exist
+    # 1 cache exist
     hit = cache.get(query, k, hybrid)
     if hit is not None:
         return hit[: max(k, 0)]

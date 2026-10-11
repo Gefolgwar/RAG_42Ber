@@ -16,9 +16,9 @@ def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -
         if not query or not query.strip() or k <= 0:
             print(json.dumps({"question": query, "answer": "", "sources": []}))
             return
-        
+
         kb = load_kb(index_directory)
-        
+
         if kb is None:
             return
         if hybrid:

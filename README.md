@@ -145,10 +145,13 @@ uv run python -m src search_dataset --dataset_path data/datasets/UnansweredQuest
 uv run python -m src evaluate --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_docs_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json
 uv run python -m src evaluate --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_code_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json
 uv run python -m src answer "What HTTP endpoint loads a LoRA adapter?" --k 2
-uv run python -m src answer_dataset \
-  --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_docs_public.json \
-  --save_directory data/output/search_results_and_answer/UnansweredQuestions
+uv run python -m src answer_dataset --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_docs_public.json --save_directory data/output/search_results_and_answer/UnansweredQuestions
+uv run python -m src answer_dataset --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_code_public.json --save_directory data/output/search_results_and_answer/UnansweredQuestions
 make api       # Bonus 5: FastAPI on :8000 (/search, /answer)
+# or
+uv run uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+# than
+$ curl -X POST localhost:8000/search -H "Content-Type: application/json" -d '{"query": "How to configure LoRA?", "k": 2}'
 ```
 
 ## Example usage
@@ -158,9 +161,7 @@ $ uv run python -m src search "What HTTP endpoint is used to dynamically load a 
 [{"file_path": "data/raw/vllm-0.10.1/docs/features/lora.md",
   "first_character_index": 4695, "last_character_index": 6100}]
 
-$ curl -X POST localhost:8000/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "How to configure LoRA?", "k": 2}'
+$ curl -X POST localhost:8000/search -H "Content-Type: application/json" -d '{"query": "How to configure LoRA?", "k": 2}'
 ```
 
 ## Resources

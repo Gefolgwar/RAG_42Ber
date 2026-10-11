@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
+import numpy.typing as npt  # avoid mypy erros
 
 from src.chunking import Chunk
 from src.file_filter import matches
@@ -21,11 +22,11 @@ def get_model():  # type: ignore[no-untyped-def]
     return SentenceTransformer(MODEL_NAME)
 
 
-def _norm_rows(mat: np.ndarray) -> np.ndarray:
+def _norm_rows(mat: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
     """L2-normalize matrix rows, guarding against zero vectors."""
     norms = np.linalg.norm(mat, axis=1, keepdims=True)
     norms[norms == 0] = 1.0
-    res: np.ndarray = mat / norms
+    res: npt.NDArray[np.float32] = mat / norms
     return res
 
 
@@ -39,7 +40,7 @@ class DenseIndex:
             chunks: Chunks aligned with embedding rows.
         """
         self.chunks: List[Chunk] = list(chunks) if chunks else []
-        self.embeddings = np.zeros((0, 384), dtype=np.float32)
+        self.embeddings: npt.NDArray[np.float32] = np.zeros((0, 384), dtype=np.float32)
 
     def build(self, show_progress: bool = True, batch_size: int = 32) -> None:
         """Encode chunk texts (file path prepended) into embeddings."""

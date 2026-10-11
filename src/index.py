@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-import bm25s
+import bm25s  # type: ignore[import-untyped]
 
 from src.chunking import Chunk
 from src.file_filter import matches
@@ -33,7 +33,7 @@ class KnowledgeBase:
         """Index chunk texts enriched with file paths."""
         if not self.chunks:
             return
-        
+
         # for с in self.chunks[:10]:
         #     print(f"Chunk: {с.file_path} [{с.first_character_index}:{с.last_character_index}]")
         #     print(f"Text: {repr(с.text[:100])}\n")

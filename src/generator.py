@@ -1,6 +1,5 @@
 """Grounded answer generation with Qwen3-0.6B, CPU-only."""
 
-import os
 from functools import lru_cache
 from typing import Any, List, Optional
 
@@ -21,13 +20,13 @@ MAX_PROMPT_TOKENS = 1024
 
 # Non-thinking sampling per Qwen3 model card (greedy causes infinite loops).
 GEN_KWARGS = {
-    "do_sample": True, # prevents infinite loops
+    "do_sample": True,  # prevents infinite loops
     "temperature": 0.7,
-    "top_p": 0.8, # selecting from a pool with a total probability of 80%
-    "top_k": 20, # selecting from the top 20 candidates
-    "min_p": 0.0, # same as top_p but for the minimum probability of the candidate pool - NOW OFF
-    "repetition_penalty": 1.15, # penalizes repeating the same tokens
-    "no_repeat_ngram_size": 3, # prevents repeating the same 3-words
+    "top_p": 0.8,  # selecting from a pool with a total probability of 80%
+    "top_k": 20,  # selecting from the top 20 candidates
+    "min_p": 0.0,  # same as top_p but for the minimum probability of the candidate pool - NOW OFF
+    "repetition_penalty": 1.15,  # penalizes repeating the same tokens
+    "no_repeat_ngram_size": 3,  # prevents repeating the same 3-words
 }
 STOP_STRINGS = ["\n\n", "\nQuestion:", "\nContext:", "So, the answer is:", "Answer:", "\\boxed"]
 
@@ -41,7 +40,10 @@ def format_context(chunks: List[Chunk], budget: int = MAX_CONTEXT_CHARS) -> str:
             break
         snippet = " ".join(ch.text.split())[:room]
         total += len(snippet)
-        lines.append(f"[Source {i}] {ch.file_path} ({ch.first_character_index}-{ch.last_character_index}):\n{snippet}")
+        lines.append(
+            f"[Source {i}] {ch.file_path} "
+            f"({ch.first_character_index}-{ch.last_character_index}):\n{snippet}"
+        )
     return "\n\n".join(lines)
 
 
@@ -69,12 +71,12 @@ class AnswerGenerator:
         if self._model is not None:
             return
 
-        torch.set_num_threads(max(1, os.cpu_count() or 4))
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self._model = AutoModelForCausalLM.from_pretrained(
-            self.model_name, dtype=torch.float32, low_cpu_mem_usage=True
+            self.model_name,
+            dtype=torch.float32,
+            low_cpu_mem_usage=True
         )
-        self._model.eval()
 
     def generate(self, question: str, chunks: List[Chunk], max_new_tokens: int = 64) -> str:
         """Generate grounded answer from retrieved chunks on CPU."""
@@ -85,7 +87,6 @@ class AnswerGenerator:
         except Exception:
             return _extractive_fallback(question, chunks)
         assert self._model is not None and self._tokenizer is not None
-        import torch
 
         context = format_context(chunks)
         msgs = [
@@ -104,10 +105,14 @@ class AnswerGenerator:
         except Exception:
             prompt = build_prompt(question, context)
         # Making tensors for with size limitation
-        inputs = self._tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_PROMPT_TOKENS)
+        inputs = self._tokenizer(
+            prompt, return_tensors="pt",
+            truncation=True,
+            max_length=MAX_PROMPT_TOKENS
+        )
         input_len = inputs["input_ids"].shape[1]
-        try:
         # Generationg answers with the model
+        try:
             with torch.inference_mode():
                 out = self._model.generate(
                     **inputs,

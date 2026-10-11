@@ -1,6 +1,6 @@
 """Local FastAPI server exposing search and answer."""
 
-from typing import List
+from typing import List, Any
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -21,7 +21,7 @@ class SearchResponse(BaseModel):
     """Search response body."""
 
     query: str
-    sources: List[dict] = []
+    sources: List[dict[str, Any]] = []
 
 
 class AnswerResponse(BaseModel):

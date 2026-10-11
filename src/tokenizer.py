@@ -8,7 +8,7 @@ the reference example. Code-aware splitting is a deferred
 improvement, not part of the skeleton.
 """
 
-from bm25s.tokenization import Tokenizer
+from bm25s.tokenization import Tokenizer  # type: ignore[import-untyped]
 
 DEFAULT_SPLITTER = r"\w+"
 

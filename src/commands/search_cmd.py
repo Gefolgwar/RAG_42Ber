@@ -80,13 +80,15 @@ def run_search_dataset(
         #         "question_id": "q1",
         #         "question": "How to load LoRA?",
         #         "retrieved_sources": [
-        #             {"file_path": "docs/lora.md", "first_character_index": 10, "last_character_index": 200}
+        #             {"file_path": "docs/lora.md", "first_character_index": 10, /
+        #               "last_character_index": 200}
         #         ]
         #     }
         # ]
         #
         # 2. UNPACKING MECHANISM (**r):
-        # For each dictionary r, the expression MinimalSearchResults(**r) translates to a direct call:
+        # For each dictionary r, the expression MinimalSearchResults(**r) \
+        # translates to a direct call:
         # MinimalSearchResults(
         #     question_id="q1",
         #     question="How to load LoRA?",
@@ -108,6 +110,6 @@ def run_search_dataset(
         dest = save_root / Path(dataset_path).name
         dest.write_text(out.model_dump_json(indent=2), encoding="utf-8")
         # as_posix() to get the path in correct format for both Windows and Unix-like systems
-        print(f"Saved student_search_results to {dest.as_posix()}") 
+        print(f"Saved student_search_results to {dest.as_posix()}")
     except Exception as exc:
         err(f"search_dataset failed: {exc}")

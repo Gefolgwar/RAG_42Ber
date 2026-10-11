@@ -27,7 +27,7 @@ def run_index(
     if not Path(repo_path).is_dir():
         err(f"repo path not found: '{repo_path}'")
         return
-    
+
     try:
         save_root = Path(save_directory)
         save_root.mkdir(parents=True, exist_ok=True)
