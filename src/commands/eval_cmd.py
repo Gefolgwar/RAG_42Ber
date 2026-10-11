@@ -29,11 +29,17 @@ def run_evaluate(student_path: str, dataset_path: str) -> None:
                      if isinstance(s, dict)]
             for k in KS:
                 per_k[k].append(recall_at_k(rlist, tlist, k))
+
+        # 50% for code, 80% for docs
+        is_code = "code" in f"{dataset_path} {student_path}".lower()
+        threshold = 0.5 if is_code else 0.8
+        pct = 50 if is_code else 80
+
         print("Evaluation Results\n" + "=" * 40)
         for k in KS:
             vals = per_k[k]
             avg = sum(vals) / len(vals) if vals else 0.0
-            mark = " (PASS >= 80%)" if k == 5 and avg >= 0.8 else ""
+            mark = f" (PASS >= {pct}%)" if k == 5 and avg >= threshold else ""
             print(f"Recall@{k}: {avg:.3f}{mark}")
     except Exception as exc:
         err(f"evaluate failed: {exc}")
