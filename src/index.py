@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-import bm25s  # type: ignore[import-untyped]
+import bm25s
 
 from src.chunking import Chunk
 from src.file_filter import matches

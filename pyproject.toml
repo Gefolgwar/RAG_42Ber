@@ -46,3 +46,12 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
+
+[[tool.mypy.overrides]]
+module = [
+    "bm25s",
+    "bm25s.*",
+    "fire",
+    "fire.*",
+]
+ignore_missing_imports = true

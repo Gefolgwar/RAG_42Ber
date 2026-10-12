@@ -105,7 +105,7 @@ class DenseIndex:
         qn[qn == 0] = 1.0
         qv = qv / qn
         # Cosine similarity is a dot product of normalized vectors.
-        sims = (mat @ qv[0]).tolist()
+        sims = mat.dot(qv[0]).tolist()
         # Best chunk index first.
         ranked = sorted(range(len(self.chunks)), key=lambda i: sims[i], reverse=True)
         # Keep only wanted file type, stop after k hits.

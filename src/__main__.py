@@ -1,7 +1,6 @@
 """Entry point for `python -m src <command>` (Chapter VI.6)."""
 
-import fire  # type: ignore[import-untyped]
-
+import fire
 from src.cli import CLI
 
 
