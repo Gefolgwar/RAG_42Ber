@@ -147,6 +147,13 @@ uv run python -m src evaluate --student_search_results_path data/output/search_r
 uv run python -m src answer "What HTTP endpoint loads a LoRA adapter?" --k 2
 uv run python -m src answer_dataset --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_docs_public.json --save_directory data/output/search_results_and_answer/UnansweredQuestions
 uv run python -m src answer_dataset --student_search_results_path data/output/search_results/UnansweredQuestions/dataset_code_public.json --save_directory data/output/search_results_and_answer/UnansweredQuestions
+# Bonus 1+2: hybrid search (BM25 + dense RRF)
+uv run python -m src index --max_chunk_size 2000 --dense
+uv run python -m src search "How to configure OpenAI server?" --k 2 --hybrid
+uv run python -m src search_dataset --dataset_path data/datasets/UnansweredQuestions/dataset_docs_public.json --k 10 --save_directory data/output/search_results_hybrid/UnansweredQuestions --hybrid
+uv run python -m src search_dataset --dataset_path data/datasets/UnansweredQuestions/dataset_code_public.json --k 10 --save_directory data/output/search_results_hybrid/UnansweredQuestions --hybrid
+uv run python -m src evaluate --student_search_results_path data/output/search_results_hybrid/UnansweredQuestions/dataset_docs_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_docs_public.json
+uv run python -m src evaluate --student_search_results_path data/output/search_results_hybrid/UnansweredQuestions/dataset_code_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json
 make api       # Bonus 5: FastAPI on :8000 (/search, /answer)
 # or
 uv run uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload

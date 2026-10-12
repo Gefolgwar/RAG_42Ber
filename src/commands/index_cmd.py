@@ -12,6 +12,8 @@ from src.index import KnowledgeBase
 from src.ingest import collect_files
 from src.retrieval import err
 
+from src.dense import DenseIndex
+
 
 def run_index(
     repo_path: str = "data/raw/vllm-0.10.1",
@@ -96,8 +98,6 @@ def run_index(
             json.dumps(cur_hashes, indent=2), encoding="utf-8")
         if dense:
             try:
-                from src.dense import DenseIndex
-
                 tqdm.write(f"Building dense index for {len(chunks)} chunks...")
                 idx = DenseIndex(chunks)
                 idx.build(show_progress=True)

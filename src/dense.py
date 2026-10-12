@@ -1,118 +1,104 @@
-"""Dense embeddings and hybrid RRF fusion (Bonus 1 and 2)."""
-
-from functools import lru_cache
-from pathlib import Path
-from typing import Dict, List, Tuple
 import json
+from pathlib import Path
+from functools import lru_cache
 
 import numpy as np
-import numpy.typing as npt  # avoid mypy erros
+from sentence_transformers import SentenceTransformer
 
 from src.chunking import Chunk
 from src.file_filter import matches
-from tqdm import tqdm
 
-from sentence_transformers import SentenceTransformer
-
+# Name of the embedding model.
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-RRF_K = 60
-
 
 @lru_cache(maxsize=1)
-def get_model():  # type: ignore[no-untyped-def]
-    """Return shared SentenceTransformer instance (loaded once)."""
-    return SentenceTransformer(MODEL_NAME)
-
-
-def _norm_rows(mat: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
-    """L2-normalize matrix rows, guarding against zero vectors."""
-    norms = np.linalg.norm(mat, axis=1, keepdims=True)
-    norms[norms == 0] = 1.0
-    res: npt.NDArray[np.float32] = mat / norms
-    return res
+def get_model():
+    # Load a fresh embedding model every time.
+    model = SentenceTransformer(MODEL_NAME)
+    return model
 
 
 class DenseIndex:
-    """384-dim MiniLM embeddings with cosine search and npy persistence."""
 
-    def __init__(self, chunks: List[Chunk] | None = None) -> None:
-        """Init with chunks and empty embedding matrix.
+    def __init__(self, chunks=None):
+        # Keep the list of text chunks.
+        if chunks is None:
+            self.chunks = []
+        else:
+            self.chunks = list(chunks)
+        # Empty embedding matrix, one row per chunk.
+        self.embeddings = np.zeros((0, 384), dtype=np.float32)
 
-        Args:
-            chunks: Chunks aligned with embedding rows.
-        """
-        self.chunks: List[Chunk] = list(chunks) if chunks else []
-        self.embeddings: npt.NDArray[np.float32] = np.zeros((0, 384), dtype=np.float32)
-
-    def build(self, show_progress: bool = True, batch_size: int = 32) -> None:
-        """Encode chunk texts (file path prepended) into embeddings."""
+    def build(self, show_progress=True):
+        # Do nothing if there are no chunks.
         if not self.chunks:
             return
-
-        tqdm.write(f"Loading dense model '{MODEL_NAME}'...")
         model = get_model()
-        texts = [f"{c.file_path} {c.text}" for c in self.chunks]
-        tqdm.write(f"Encoding {len(texts)} chunks...")
-        vecs = model.encode(
-            texts,
-            show_progress_bar=show_progress,
-            batch_size=batch_size,
-            convert_to_numpy=True,
-        )
+        # Join file path and text so the path also helps search.
+        texts = []
+        for c in self.chunks:
+            texts.append(c.file_path + " " + c.text)
+        # Turn every text into a vector.
+        vecs = model.encode(texts, show_progress_bar=show_progress)
         self.embeddings = np.asarray(vecs, dtype=np.float32)
 
-    def save(self, directory: str) -> None:
-        """Save embeddings.npy plus chunk order sidecar.
-
-        Args:
-            directory: Target directory (created if missing).
-        """
+    def save(self, directory):
+        # Create the target folder if needed.
         root = Path(directory)
         root.mkdir(parents=True, exist_ok=True)
+        # Save the vectors as a numpy file.
         np.save(str(root / "embeddings.npy"), self.embeddings)
-
-        order = [c.__dict__ for c in self.chunks]
-        (root / "order.json").write_text(json.dumps(order), encoding="utf-8")
+        # Save the chunk order as json, so load knows which row is which chunk.
+        order = []
+        for c in self.chunks:
+            order.append(c.__dict__)
+        text = json.dumps(order)
+        (root / "order.json").write_text(text, encoding="utf-8")
 
     @classmethod
-    def load(cls, directory: str) -> "DenseIndex":
-        """Restore embeddings and chunk order from disk.
-
-        Args:
-            directory: Directory previously written by save().
-
-        Returns:
-            DenseIndex with embeddings and chunks restored.
-        """
+    def load(cls, directory):
+        # Read back what save() wrote.
         root = Path(directory)
         idx = cls([])
         idx.embeddings = np.load(str(root / "embeddings.npy"))
-        raw = json.loads((root / "order.json").read_text(encoding="utf-8"))
-        idx.chunks = [Chunk(**r) for r in raw]
+        text = (root / "order.json").read_text(encoding="utf-8")
+        raw = json.loads(text)
+        # Rebuild Chunk objects from plain dicts.
+        chunks = []
+        for r in raw:
+            chunks.append(Chunk(**r))
+        idx.chunks = chunks
         return idx
 
-    def search_dense(
-        self, query: str, k: int = 10, file_type: str = "all"
-    ) -> List[Tuple[Chunk, float]]:
-        """Cosine-similarity search with file-type filtering.
-
-        Args:
-            query: User question string.
-            k: Number of results to return.
-            file_type: "all", "docs" or "code".
-
-        Returns:
-            Ranked (chunk, cosine score) pairs.
-        """
-        if not query or not query.strip() or k <= 0 or not self.chunks:
+    def search_dense(self, query, k=10, file_type="all"):
+        # Guard against bad input.
+        if not query:
+            return []
+        if not query.strip():
+            return []
+        if k <= 0:
+            return []
+        if not self.chunks:
             return []
         model = get_model()
-        qv = np.asarray(model.encode([query], convert_to_numpy=True), dtype=np.float32)
-        mat = _norm_rows(self.embeddings)
-        qn = _norm_rows(qv)
-        sims = (mat @ qn[0]).tolist()
+        # Turn the query into one vector.
+        qv = model.encode([query])
+        qv = np.asarray(qv, dtype=np.float32)
+        # L2-normalize stored vectors for cosine search.
+        mat = self.embeddings
+        mn = np.linalg.norm(mat, axis=1, keepdims=True)
+        mn[mn == 0] = 1.0
+        mat = mat / mn
+        # L2-normalize the query vector too.
+        qn = np.linalg.norm(qv, axis=1, keepdims=True)
+        qn[qn == 0] = 1.0
+        qv = qv / qn
+        # Cosine similarity is a dot product of normalized vectors.
+        sims = (mat @ qv[0]).tolist()
+        # Best chunk index first.
         ranked = sorted(range(len(self.chunks)), key=lambda i: sims[i], reverse=True)
-        out: List[Tuple[Chunk, float]] = []
+        # Keep only wanted file type, stop after k hits.
+        out = []
         for i in ranked:
             if matches(self.chunks[i].file_path, file_type):
                 out.append((self.chunks[i], float(sims[i])))
@@ -121,27 +107,22 @@ class DenseIndex:
         return out
 
 
-@lru_cache(maxsize=4)
-def load_dense_cached(directory: str) -> "DenseIndex":
-    """Return shared DenseIndex instance (embeddings loaded once)."""
-    return DenseIndex.load(directory)
+def load_dense_cached(directory):
+    idx = DenseIndex.load(directory)
+    return idx
 
 
-def rrf_fuse(
-    ranked_lists: List[List[str]], k: int = 10, rrf_k: int = RRF_K
-) -> List[Tuple[str, float]]:
-    """Fuse ranked key lists with Reciprocal Rank Fusion.
-
-    Args:
-        ranked_lists: Lists of chunk keys in rank order per method.
-        k: Number of fused keys to return.
-        rrf_k: RRF smoothing constant (60).
-
-    Returns:
-        (key, fused score) pairs sorted by descending score.
-    """
-    scores: Dict[str, float] = {}
+def rrf_fuse(ranked_lists, k=10):
+    # Merge ranked lists with Reciprocal Rank Fusion.
+    # Score is sum of 1 / (60 + rank).
+    scores = {}
     for ranked in ranked_lists:
-        for rank, key in enumerate(ranked, 1):
-            scores[key] = scores.get(key, 0.0) + 1.0 / (rrf_k + rank)
-    return sorted(scores.items(), key=lambda kv: kv[1], reverse=True)[: max(k, 0)]
+        rank = 1
+        for key in ranked:
+            if key not in scores:
+                scores[key] = 0.0
+            scores[key] = scores[key] + 1.0 / (60 + rank)
+            rank = rank + 1
+    # Best score first, cut to k.
+    items = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)
+    return items[:k]
