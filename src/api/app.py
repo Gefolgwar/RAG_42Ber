@@ -46,7 +46,10 @@ def search(req: SearchRequest) -> SearchResponse:
         srcs = [chunk_to_source(ch).model_dump() for ch, _ in pairs]
         return SearchResponse(query=req.query, sources=srcs)
     except Exception as exc:
-        return JSONResponse(status_code=500, content={"error": str(exc)})  # type: ignore
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(exc)}
+        )  # type: ignore
 
 
 @app.post("/answer", response_model=AnswerResponse)
@@ -61,4 +64,7 @@ def answer(req: SearchRequest) -> AnswerResponse:
         text = get_generator().generate(req.query, chunks)
         return AnswerResponse(query=req.query, answer=text)
     except Exception as exc:
-        return JSONResponse(status_code=500, content={"error": str(exc)})  # type: ignore
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(exc)}
+        )  # type: ignore

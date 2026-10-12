@@ -13,8 +13,12 @@ def run_evaluate(student_path: str, dataset_path: str) -> None:
     """Print Recall@k against ground truth."""
     try:
         try:
-            student = json.loads(Path(student_path).read_text(encoding="utf-8"))
-            truth = json.loads(Path(dataset_path).read_text(encoding="utf-8"))
+            student = json.loads(
+                Path(student_path).read_text(encoding="utf-8")
+            )
+            truth = json.loads(
+                Path(dataset_path).read_text(encoding="utf-8")
+            )
         except (OSError, ValueError) as exc:
             err(f"cannot read input: {exc}")
             return

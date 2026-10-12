@@ -35,7 +35,8 @@ class KnowledgeBase:
             return
 
         # for с in self.chunks[:10]:
-        #     print(f"Chunk: {с.file_path} [{с.first_character_index}:{с.last_character_index}]")
+        #     print(f"Chunk: {с.file_path} \
+        #         [{с.first_character_index}:{с.last_character_index}]")
         #     print(f"Text: {repr(с.text[:100])}\n")
 
         texts = [f"{c.file_path} {c.text}" for c in self.chunks]
@@ -65,9 +66,11 @@ class KnowledgeBase:
         )
         meta = {
             "num_chunks": len(self.chunks),
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
-        (root / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        (root / "meta.json").write_text(
+            json.dumps(meta, indent=2), encoding="utf-8"
+        )
 
     @classmethod
     def load(cls, directory: str) -> "KnowledgeBase":

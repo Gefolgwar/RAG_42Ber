@@ -42,7 +42,9 @@ class QueryCache:
         """
         self.path = path
         self.fingerprint = fingerprint
-        self._data: dict[str, object] = {"fingerprint": fingerprint, "items": {}}
+        self._data: dict[str, object] = {
+            "fingerprint": fingerprint, "items": {}
+        }
         try:
             raw = json.loads(Path(path).read_text(encoding="utf-8"))
             if isinstance(raw, dict) and raw.get("fingerprint") == fingerprint:
@@ -52,7 +54,12 @@ class QueryCache:
         except ValueError:
             pass
 
-    def get(self, query: str, k: int, hybrid: bool = False) -> Optional[List[MinimalSource]]:
+    def get(
+        self,
+        query: str,
+        k: int,
+        hybrid: bool = False
+    ) -> Optional[List[MinimalSource]]:
         """Return cached sources or None on miss.
 
         Args:
@@ -74,7 +81,11 @@ class QueryCache:
             return None
 
     def put(
-        self, query: str, k: int, sources: List[MinimalSource], hybrid: bool = False
+        self,
+        query: str,
+        k: int,
+        sources: List[MinimalSource],
+        hybrid: bool = False
     ) -> None:
         """Store sources and persist cache to disk.
 
@@ -89,8 +100,13 @@ class QueryCache:
             if not isinstance(items, dict):
                 items = {}
                 self._data["items"] = items
-            items[cache_key(query, k, hybrid)] = [s.model_dump() for s in sources]
+            items[cache_key(query, k, hybrid)] = [
+                s.model_dump() for s in sources
+            ]
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-            Path(self.path).write_text(json.dumps(self._data), encoding="utf-8")
+            Path(self.path).write_text(
+                json.dumps(self._data),
+                encoding="utf-8"
+            )
         except OSError:
             pass

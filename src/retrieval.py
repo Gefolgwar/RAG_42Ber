@@ -30,7 +30,9 @@ def load_kb(index_directory: str) -> Optional[KnowledgeBase]:
 def fingerprint(index_directory: str) -> str:
     """Read index fingerprint for cache invalidation."""
     try:
-        meta = json.loads((Path(index_directory) / "meta.json").read_text("utf-8"))
+        meta = json.loads(
+            (Path(index_directory) / "meta.json").read_text("utf-8")
+        )
         return str(meta.get("created_at", ""))
     except (OSError, ValueError):
         return ""
@@ -69,7 +71,9 @@ def hybrid_search(
              [chunk_key(ch) for ch, _ in dense_pairs]],
             k=k,
         )
-        return [(by_key[key][0], score) for key, score in fused if key in by_key]
+        return [
+            (by_key[key][0], score) for key, score in fused if key in by_key
+        ]
     except Exception:
         return bm25_pairs
 
@@ -117,13 +121,19 @@ def _span_map(index_directory: str) -> Dict[Tuple[str, int], Chunk]:
     return by_span
 
 
-def resolve_chunks(sources: List[MinimalSource], index_directory: str) -> List[Chunk]:
+def resolve_chunks(
+        sources: List[MinimalSource],
+        index_directory: str
+) -> List[Chunk]:
     """Map sources back to texts via index or disk."""
     by_span = _span_map(index_directory)
     out: List[Chunk] = []
     for src in sources:
         hit = by_span.get((src.file_path, src.first_character_index))
-        if hit is not None and hit.last_character_index == src.last_character_index:
+        if (
+            hit is not None
+            and hit.last_character_index == src.last_character_index
+        ):
             out.append(hit)
             continue
         # file_path is verbatim corpus path (data/raw/vllm-0.10.1/...),

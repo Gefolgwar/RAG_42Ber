@@ -11,7 +11,11 @@ from src.retrieval import err, fingerprint, load_kb, search_cached
 
 
 def run_search(
-    query: str, k: int, index_directory: str, file_type: str, hybrid: bool = False
+    query: str,
+    k: int,
+    index_directory: str,
+    file_type: str,
+    hybrid: bool = False
 ) -> None:
     """Print top-k sources as JSON list."""
     try:
@@ -30,7 +34,15 @@ def run_search(
         # fingerprint(...) read 'created_at' from data/processed/meta.json.
         cache = QueryCache(fingerprint=fingerprint(index_directory))
         # Search with cache, fallback to BM25 or hybrid search
-        sources = search_cached(kb, query, k, file_type, cache, index_directory, hybrid)
+        sources = search_cached(
+            kb,
+            query,
+            k,
+            file_type,
+            cache,
+            index_directory,
+            hybrid
+        )
         print(json.dumps([s.model_dump() for s in sources]))
     except Exception as exc:
         err(f"search failed: {exc}")
@@ -55,7 +67,9 @@ def run_search_dataset(
         except (OSError, ValueError) as exc:
             err(f"cannot read dataset '{dataset_path}': {exc}")
             return
-        questions = data.get("rag_questions", []) if isinstance(data, dict) else []
+        questions = (
+            data.get("rag_questions", []) if isinstance(data, dict) else []
+        )
         cache = QueryCache(fingerprint=fingerprint(index_directory))
         results = []
         for q in tqdm(questions, desc="Searching", unit="q"):
@@ -73,14 +87,16 @@ def run_search_dataset(
                     retrieved_sources=srcs).model_dump())
             except Exception as exc:
                 err(f"skip question: {exc}")
-        # region [explanation and example] How does unpacking **r work in StudentSearchResults
+        # region [explanation and example] How does unpacking **r
+        # work in StudentSearchResults
         # 1. INPUT EXAMPLE (what is currently in the results list):
         # results = [
         #     {
         #         "question_id": "q1",
         #         "question": "How to load LoRA?",
         #         "retrieved_sources": [
-        #             {"file_path": "docs/lora.md", "first_character_index": 10, /
+        #             {"file_path": "docs/lora.md",
+        #               "first_character_index": 10,
         #               "last_character_index": 200}
         #         ]
         #     }
@@ -98,7 +114,8 @@ def run_search_dataset(
         # 3. OUTPUT EXAMPLE (what will appear in the out variable):
         # out = StudentSearchResults(
         #     search_results=[
-        #         MinimalSearchResults(question_id='q1', question='How to load LoRA?', ...)
+        #         MinimalSearchResults(question_id='q1',
+        #           question='How to load LoRA?', ...)
         #     ],
         #     k=10
         # )
@@ -109,7 +126,8 @@ def run_search_dataset(
         save_root.mkdir(parents=True, exist_ok=True)
         dest = save_root / Path(dataset_path).name
         dest.write_text(out.model_dump_json(indent=2), encoding="utf-8")
-        # as_posix() to get the path in correct format for both Windows and Unix-like systems
+        # as_posix() to get the path in correct
+        # format for both Windows and Unix-like systems
         print(f"Saved student_search_results to {dest.as_posix()}")
     except Exception as exc:
         err(f"search_dataset failed: {exc}")

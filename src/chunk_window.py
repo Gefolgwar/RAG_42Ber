@@ -5,7 +5,13 @@ from typing import List
 from src.chunk_types import Chunk
 
 
-def split_oversized(path: str, text: str, start: int, end: int, max_size: int) -> List[Chunk]:
+def split_oversized(
+        path: str,
+        text: str,
+        start: int,
+        end: int,
+        max_size: int
+) -> List[Chunk]:
     """Split [start:end) with 10% overlap."""
     out: List[Chunk] = []
     step = max(max_size - max_size // 10, 1)
@@ -19,7 +25,12 @@ def split_oversized(path: str, text: str, start: int, end: int, max_size: int) -
     return out
 
 
-def spans(path: str, text: str, bounds: List[int], max_size: int) -> List[Chunk]:
+def spans(
+    path: str,
+    text: str,
+    bounds: List[int],
+    max_size: int
+) -> List[Chunk]:
     """Build chunks from sorted bounds."""
     out: List[Chunk] = []
     # For example, if bounds = [0, 300, 1500],

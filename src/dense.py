@@ -1,4 +1,7 @@
-"""Dense semantic retriever using sentence-transformers and cosine similarity."""
+"""
+Dense semantic retriever using
+sentence-transformers and cosine similarity.
+"""
 
 import json
 from functools import lru_cache
@@ -107,7 +110,11 @@ class DenseIndex:
         # Cosine similarity is a dot product of normalized vectors.
         sims = mat.dot(qv[0]).tolist()
         # Best chunk index first.
-        ranked = sorted(range(len(self.chunks)), key=lambda i: sims[i], reverse=True)
+        ranked = sorted(range(
+            len(self.chunks)),
+            key=lambda i: sims[i],
+            reverse=True
+        )
         # Keep only wanted file type, stop after k hits.
         out: List[Tuple[Chunk, float]] = []
         for i in ranked:

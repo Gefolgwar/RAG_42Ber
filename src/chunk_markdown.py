@@ -19,7 +19,11 @@ def is_header(line: str) -> bool:
     return stripped[hashes] in " \t\r\n"
 
 
-def chunk_markdown(path: str, text: str, max_chunk_size: int = 2000) -> List[Chunk]:
+def chunk_markdown(
+        path: str,
+        text: str,
+        max_chunk_size: int = 2000
+) -> List[Chunk]:
     """Split by headers."""
     bounds = [0]
     pos = 0

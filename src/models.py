@@ -24,7 +24,7 @@ class MinimalSource(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     file_path: str = Field(
-        description="Exact file path relative to repo root (e.g. data/raw/...)",
+        description="Exact file path relative to repo root (e.g. data/raw/...)"
     )
     first_character_index: int = Field(
         ge=0,

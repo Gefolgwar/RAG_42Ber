@@ -35,7 +35,9 @@ def run_index(
         save_root.mkdir(parents=True, exist_ok=True)
 
         try:
-            old_hashes = json.loads((save_root / "hashes.json").read_text("utf-8"))
+            old_hashes = json.loads(
+                (save_root / "hashes.json").read_text("utf-8")
+            )
         except (OSError, ValueError):
             old_hashes = {}
 
@@ -43,7 +45,9 @@ def run_index(
         cur_hashes = hashes_for(files)
         changed, deleted = diff_hashes(old_hashes, cur_hashes)
 
-        # for idx, (path, file_hash) in enumerate(list(cur_hashes.items())[:10], start=1):
+        # for idx, (path, file_hash) in enumerate(
+        #   list(cur_hashes.items())[:10], start=1
+        # ):
         #     print(f"[{idx}] File: {path}")
         #     print(f"Hash: {file_hash}")
         #     print("-" * 50)
@@ -61,7 +65,10 @@ def run_index(
 
         if old_chunks and (save_root / "bm25_index").is_dir():
             if not changed and not deleted:
-                print(f"Index up-to-date! {len(old_chunks)} chunks under {save_directory}/")
+                print(
+                    f"Index up-to-date! {len(old_chunks)}"
+                    f"chunks under {save_directory}/"
+                )
                 return
 
         keep = []
@@ -104,6 +111,7 @@ def run_index(
                 idx.save(str(save_root / "dense_index"))
             except Exception as exc:
                 err(f"dense index skipped: {exc}")
-        print(f"Ingestion complete! Indexed {len(chunks)} chunks under {save_directory}/")
+        print(f"Ingestion complete! Indexed {len(chunks)}"
+              f"chunks under {save_directory}/")
     except Exception as exc:
         err(f"indexing failed: {exc}")

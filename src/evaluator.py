@@ -28,7 +28,9 @@ def overlap_ratio(retrieved: MinimalSource, truth: MinimalSource) -> float:
     truth_len = truth.last_character_index - truth.first_character_index
     if truth_len <= 0:
         return 0.0
-    inter = min(retrieved.last_character_index, truth.last_character_index) - max(
+    inter = min(
+        retrieved.last_character_index, truth.last_character_index
+    ) - max(
         retrieved.first_character_index, truth.first_character_index
     )
     return max(0, inter) / truth_len

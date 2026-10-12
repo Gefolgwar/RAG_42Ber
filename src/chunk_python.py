@@ -15,7 +15,11 @@ def line_offsets(text: str) -> List[int]:
     return out
 
 
-def chunk_python(path: str, text: str, max_chunk_size: int = 2000) -> List[Chunk]:
+def chunk_python(
+    path: str,
+    text: str,
+    max_chunk_size: int = 2000
+) -> List[Chunk]:
     """Split by top defs/classes, fallback to window."""
     try:
         tree = ast.parse(text)
@@ -26,10 +30,13 @@ def chunk_python(path: str, text: str, max_chunk_size: int = 2000) -> List[Chunk
     def pos(lineno: int, col: int) -> int:
         return offsets[lineno - 1] + col
 
-    # bounds list of indexis, where file spilts, for example bounds = [0, 150, 420, 600, 1200]
+    # bounds list of indexis, where file spilts,
+    # for example bounds = [0, 150, 420, 600, 1200]
     bounds = [0]
     for node in tree.body:  # tree.body - list of all instractions
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if not isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+        ):
             continue
         # start
         lines = [node.lineno] + [d.lineno for d in node.decorator_list]

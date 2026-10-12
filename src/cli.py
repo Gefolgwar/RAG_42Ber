@@ -61,7 +61,11 @@ class CLI:
         index_directory: str = "data/processed",
     ) -> None:
         """Answer dataset and write answers JSON."""
-        run_answer_dataset(student_search_results_path, save_directory, index_directory)
+        run_answer_dataset(
+            student_search_results_path,
+            save_directory,
+            index_directory
+        )
 
     def evaluate(
         self, student_search_results_path: str = "", dataset_path: str = ""

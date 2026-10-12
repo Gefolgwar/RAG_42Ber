@@ -5,12 +5,27 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from src.models import MinimalAnswer, MinimalSource, StudentSearchResultsAndAnswer
-from src.retrieval import chunk_to_source, err, hybrid_search, load_kb, resolve_chunks
+from src.models import (
+    MinimalAnswer,
+    MinimalSource,
+    StudentSearchResultsAndAnswer
+)
+from src.retrieval import (
+    chunk_to_source,
+    err,
+    hybrid_search,
+    load_kb,
+    resolve_chunks
+)
 from src.generator import get_generator
 
 
-def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -> None:
+def run_answer(
+        query: str,
+        k: int,
+        index_directory: str,
+        hybrid: bool = False
+) -> None:
     """Answer single query as JSON."""
     try:
         if not query or not query.strip() or k <= 0:
@@ -31,9 +46,11 @@ def run_answer(query: str, k: int, index_directory: str, hybrid: bool = False) -
         except Exception as exc:
             err(f"generation failed: {exc}")
             text = ""
-        ans = MinimalAnswer(question_id="single-query", question=query,
-                            retrieved_sources=[chunk_to_source(c) for c in chunks],
-                            answer=text)
+        ans = MinimalAnswer(
+            question_id="single-query", question=query,
+            retrieved_sources=[chunk_to_source(c) for c in chunks],
+            answer=text
+        )
         print(ans.model_dump_json(indent=2))
     except Exception as exc:
         err(f"answer failed: {exc}")
@@ -49,14 +66,18 @@ def run_answer_dataset(
         except (OSError, ValueError) as exc:
             err(f"cannot read '{results_path}': {exc}")
             return
-        entries = data.get("search_results", []) if isinstance(data, dict) else []
+        entries = (
+            data.get("search_results", []) if isinstance(data, dict) else []
+        )
         kk = int(data.get("k", 5)) if isinstance(data, dict) else 5
         gen = get_generator()
         answers = []
         print(f"Loaded {len(entries)} questions ...")
         for e in tqdm(entries, desc="Answering", unit="q"):
             try:
-                srcs = [MinimalSource(**s) for s in e.get("retrieved_sources", [])]
+                srcs = [
+                    MinimalSource(**s) for s in e.get("retrieved_sources", [])
+                ]
                 chunks = resolve_chunks(srcs, index_directory)
                 try:
                     text = gen.generate(str(e.get("question", "")), chunks)
