@@ -22,6 +22,8 @@ def split_oversized(path: str, text: str, start: int, end: int, max_size: int) -
 def spans(path: str, text: str, bounds: List[int], max_size: int) -> List[Chunk]:
     """Build chunks from sorted bounds."""
     out: List[Chunk] = []
+    # For example, if bounds = [0, 300, 1500],
+    # zip will create the pairs: (0, 300) and (300, 1500).
     for start, end in zip(bounds, bounds[1:]):
         if end - start <= max_size:
             out.append(Chunk(path, start, end, text[start:end]))

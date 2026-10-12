@@ -92,7 +92,7 @@ Measured on this machine (corpus: 1952 files -> 28,837 chunks):
 - Retrieval: ~140 questions/s (limit: 90 s per 200 questions).
 - All retrieved spans <= 2000 chars (`max_context_length` valid).
 
-## Design decisions
+## Design decisions and trade-oﬀs
 
 - **No heavy frameworks**: direct `ast (Abstract Syntax Tree)`
   parsing, header splitting and `bm25s` keep the pipeline reproducible under
@@ -108,6 +108,11 @@ Measured on this machine (corpus: 1952 files -> 28,837 chunks):
 - **Sampling generation**: non-thinking sampling per Qwen3 model card
   (`do_sample=True`, `temperature=0.7`) with repetition penalty and
   extractive fallback; grading prioritizes grounding over phrasing.
+
+  **Our primary trade-off** balances chunk granularity against retrieval
+  accuracy and context limits. We chose semantic AST and Markdown header
+  splitting (capped at 2,000 characters) over smaller, fixed-size windows
+  to keep complete functions and documentation sections intact. 
 
 ## Challenges faced
 
@@ -192,7 +197,7 @@ $ curl -X POST localhost:8000/search -H "Content-Type: application/json" -d '{"q
 
 AI assistance (code-oriented LLM agent) was used for the following tasks
 and parts: scaffolding module skeletons (`src/models.py`, `src/cli.py`,
-`api/app.py`) from the step-by-step specification, drafting docstrings and
+`src/api/app.py`) from the step-by-step specification, drafting docstrings and
 the README structure (`Description`, `System architecture`, `Resources`),
 and diagnosing errors in path handling (`src/ingest.py`, `src/index.py`)
 and lint scope (`Makefile`). All retrieval thresholds were verified by
