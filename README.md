@@ -156,7 +156,7 @@ uv run python -m src evaluate --student_search_results_path data/output/search_r
 uv run python -m src evaluate --student_search_results_path data/output/search_results_hybrid/UnansweredQuestions/dataset_code_public.json --dataset_path data/datasets/AnsweredQuestions/dataset_code_public.json
 make api       # Bonus 5: FastAPI on :8000 (/search, /answer)
 # or
-uv run uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 # than
 curl -X POST localhost:8000/search -H "Content-Type: application/json" -d '{"query": "How to configure LoRA?", "k": 2}'
 ```

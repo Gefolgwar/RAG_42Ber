@@ -71,7 +71,7 @@ test:
 # ------------------------------------------------------------------------------
 api:
 	@echo "==> Starting FastAPI local server on http://localhost:8000..."
-	$(UV) run uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+	$(UV) run uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 
 # ------------------------------------------------------------------------------
 # Cleanup (Chapter V.2)
